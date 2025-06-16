@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SchoolPlus - After School Activities</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <style>
+      @keyframes float {
+        0% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+        100% {
+          transform: translateY(0px);
+        }
+      }
+      .float-animation {
+        animation: float 3s ease-in-out infinite;
+      }
+    </style>
+  </head>
+  <body class="bg-white">
+    <!-- Header -->
+    <header class="fixed w-full bg-white shadow-lg z-50">
+      <nav class="container mx-auto px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div class="text-2xl font-bold text-blue-600 float-animation">
+            SchoolPlus
+          </div>
+          <ul class="hidden md:flex space-x-8">
+            <li>
+              <a
+                href="index.html"
+                class="text-gray-700 hover:text-blue-600 transition-colors duration-300"
+                >Home</a
+              >
+            </li>
+            <li>
+              <a
+                href="courses.html"
+                class="text-gray-700 hover:text-blue-600 transition-colors duration-300"
+                >Courses</a
+              >
+            </li>
+            <li>
+              <a
+                href="#about"
+                class="text-gray-700 hover:text-blue-600 transition-colors duration-300"
+                >About</a
+              >
+            </li>
+            <li>
+              <a
+                href="#contact"
+                class="text-gray-700 hover:text-blue-600 transition-colors duration-300"
+                >Contact</a
+              >
+            </li>
+          </ul>
+          <div class="space-x-4">
+            <a
+              href="login.html"
+              class="px-6 py-2 text-blue-600 border-2 border-blue-600 rounded-full hover:bg-blue-50 transition-all duration-300"
+            >
+              Login
+            </a>
+            <a
+              href="register.html"
+              class="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all duration-300 hover:shadow-lg"
+            >
+              Sign Up
+            </a>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container mx-auto px-6 pt-24">
+      <!-- Hero Section -->
+      <section
+        class="text-center py-20 bg-gradient-to-r from-blue-50 via-blue-100 to-blue-50 rounded-3xl my-8"
+        data-aos="fade-up"
+        data-aos-duration="1000"
+      >
+        <div class="max-w-4xl mx-auto">
+          <h1 class="text-6xl font-bold text-gray-800 mb-6 leading-tight">
+            Discover Amazing
+            <span class="text-blue-600">After School Activities</span>
+          </h1>
+          <p
+            class="text-xl text-gray-600 max-w-2xl mx-auto mb-8 leading-relaxed"
+          >
+            From sports to arts, science to music - find the perfect activity
+            for your child. Join thousands of families who trust SchoolPlus for
+            quality after-school programs.
+          </p>
+          <a
+            href="courses.html"
+            class="px-8 py-4 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all duration-300 hover:shadow-xl inline-block"
+          >
+            Browse Courses
+          </a>
+        </div>
+      </section>
+
+      <!-- Features Section -->
+      <section class="py-16 bg-white rounded-3xl shadow-lg my-8">
+        <h2
+          class="text-4xl font-bold text-center text-gray-800 mb-12"
+          data-aos="fade-up"
+        >
+          Why Choose SchoolPlus?
+        </h2>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 px-8">
+          <div
+            class="p-8 bg-blue-50 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2"
+            data-aos="fade-up"
+            data-aos-delay="100"
+          >
+            <div class="text-4xl text-blue-600 mb-4">
+              <i class="fas fa-star"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-4">
+              Expert Instructors
+            </h3>
+            <p class="text-gray-600">
+              Our certified instructors bring years of experience and passion to
+              every class.
+            </p>
+          </div>
+          <div
+            class="p-8 bg-blue-50 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2"
+            data-aos="fade-up"
+            data-aos-delay="100"
+          >
+            <div class="text-4xl text-blue-600 mb-4">
+              <i class="fas fa-clock"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-4">
+              Flexible Schedule
+            </h3>
+            <p class="text-gray-600">
+              Choose from multiple time slots that fit your family's busy
+              schedule.
+            </p>
+          </div>
+
+          <div
+            class="p-8 bg-blue-50 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2"
+            data-aos="fade-up"
+            data-aos-delay="100"
+          >
+            <div class="text-4xl text-blue-600 mb-4">
+              <i class="fas fa-user-graduate"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-4">
+              Personalized Learning
+            </h3>
+            <p class="text-gray-600">
+              Custom-tailored programs that adapt to each student's pace and
+              learning style.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Stats Section -->
+      <section
+        class="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-3xl py-16 my-8"
+        data-aos="fade-up"
+      >
+        <div class="grid md:grid-cols-4 gap-8 text-center">
+          <div class="stat-item" data-aos="zoom-in" data-aos-delay="100">
+            <h3 class="text-5xl font-bold mb-2">5,000+</h3>
+            <p class="text-blue-100">Happy Students</p>
+          </div>
+          <div class="stat-item" data-aos="zoom-in" data-aos-delay="200">
+            <h3 class="text-5xl font-bold mb-2">100+</h3>
+            <p class="text-blue-100">Expert Instructors</p>
+          </div>
+          <div class="stat-item" data-aos="zoom-in" data-aos-delay="300">
+            <h3 class="text-5xl font-bold mb-2">50+</h3>
+            <p class="text-blue-100">Activity Categories</p>
+          </div>
+          <div class="stat-item" data-aos="zoom-in" data-aos-delay="400">
+            <h3 class="text-5xl font-bold mb-2">95%</h3>
+            <p class="text-blue-100">Parent Satisfaction</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Categories Section -->
+    <section
+      class="bg-white rounded-3xl shadow-lg py-16 my-8"
+      data-aos="fade-up"
+    >
+      <h2 class="text-4xl font-bold text-center text-gray-800 mb-12">
+        Explore Our Categories
+      </h2>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 px-8">
+        <!-- Category cards using Tailwind -->
+        <div
+        class="bg-gradient-to-r from-blue-500 to-blue-600 p-8 rounded-xl text-white hover:shadow-xl transition-all cursor-pointer"
+        data-aos="flip-left"
+        data-aos-delay="100"
+        >
+        <i class="fas fa-running text-4xl mb-4"></i>
+        <h3 class="text-xl font-bold mb-2">Sports & Fitness</h3>
+        <p class="text-blue-100">Soccer, Basketball, Tennis, Swimming</p>
+        </div>
+        <div
+        class="bg-gradient-to-r from-purple-500 to-purple-600 p-8 rounded-xl text-white hover:shadow-xl transition-all cursor-pointer"
+        data-aos="flip-left"
+        data-aos-delay="200"
+        >
+        <i class="fas fa-palette text-4xl mb-4"></i>
+        <h3 class="text-xl font-bold mb-2">Arts & Crafts</h3>
+        <p class="text-purple-100">Painting, Drawing, Sculpture, Design</p>
+        </div>
+
+        <div
+        class="bg-gradient-to-r from-green-500 to-green-600 p-8 rounded-xl text-white hover:shadow-xl transition-all cursor-pointer"
+        data-aos="flip-left"
+        data-aos-delay="300"
+        >
+        <i class="fas fa-microscope text-4xl mb-4"></i>
+        <h3 class="text-xl font-bold mb-2">Science & Tech</h3>
+        <p class="text-green-100">Robotics, Coding, Experiments</p>
+        </div>
+
+        <div
+        class="bg-gradient-to-r from-red-500 to-red-600 p-8 rounded-xl text-white hover:shadow-xl transition-all cursor-pointer"
+        data-aos="flip-left"
+        data-aos-delay="400"
+        >
+        <i class="fas fa-music text-4xl mb-4"></i>
+        <h3 class="text-xl font-bold mb-2">Music & Dance</h3>
+        <p class="text-red-100">Piano, Guitar, Ballet, Hip-Hop</p>
+        </div>
+
+        <div
+        class="bg-gradient-to-r from-yellow-500 to-yellow-600 p-8 rounded-xl text-white hover:shadow-xl transition-all cursor-pointer"
+        data-aos="flip-left"
+        data-aos-delay="500"
+        >
+        <i class="fas fa-language text-4xl mb-4"></i>
+        <h3 class="text-xl font-bold mb-2">Languages</h3>
+        <p class="text-yellow-100">Spanish, French, Mandarin</p>
+        </div>
+
+        <div
+        class="bg-gradient-to-r from-pink-500 to-pink-600 p-8 rounded-xl text-white hover:shadow-xl transition-all cursor-pointer"
+        data-aos="flip-left"
+        data-aos-delay="600"
+        >
+        <i class="fas fa-chess text-4xl mb-4"></i>
+        <h3 class="text-xl font-bold mb-2">Chess & Strategy</h3>
+        <p class="text-pink-100">Chess Club, Problem Solving</p>
+        </div>
+      </div>
+    </section>
+
+      <!-- Testimonials Section -->
+      <section
+        class="bg-white rounded-3xl shadow-lg py-16 my-8"
+        data-aos="fade-up"
+      >
+        <h2 class="text-4xl font-bold text-center text-gray-800 mb-12">
+          What Parents Say
+        </h2>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 px-8">
+          <div class="p-8 bg-gray-50 rounded-xl">
+            <div class="text-yellow-400 mb-4">
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+            </div>
+            <p class="text-gray-600 mb-4">
+              "SchoolPlus has been amazing for my daughter. She loves her dance
+              classes and has made great progress!"
+            </p>
+            <div class="font-bold text-gray-800">Sarah M.</div>
+          </div>
+          <div class="p-8 bg-gray-50 rounded-xl">
+            <div class="text-yellow-400 mb-4">
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+            </div>
+            <p class="text-gray-600 mb-4">
+              "The coding classes have sparked a real interest in technology for
+              my son. Excellent instructors!"
+            </p>
+            <div class="font-bold text-gray-800">Michael R.</div>
+          </div>
+          <div class="p-8 bg-gray-50 rounded-xl">
+            <div class="text-yellow-400 mb-4">
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+            </div>
+            <p class="text-gray-600 mb-4">
+              "Flexible scheduling and professional staff make SchoolPlus the
+              perfect choice for busy families."
+            </p>
+            <div class="font-bold text-gray-800">Lisa K.</div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-50 mt-20">
+      <div class="container mx-auto px-6 py-12">
+        <div class="grid md:grid-cols-4 gap-8">
+          <div>
+            <h3 class="text-lg font-bold text-gray-800 mb-4">SchoolPlus</h3>
+            <p class="text-gray-600">
+              Making after-school activities accessible and engaging for every
+              child.
+            </p>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Quick Links</h3>
+            <ul class="space-y-2 text-gray-600">
+              <li>
+                <a href="courses.html" class="hover:text-blue-600">Courses</a>
+              </li>
+              <li><a href="#about" class="hover:text-blue-600">About Us</a></li>
+              <li>
+                <a href="#contact" class="hover:text-blue-600">Contact</a>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Contact Info</h3>
+            <ul class="space-y-2 text-gray-600">
+              <li><i class="fas fa-phone mr-2"></i>+1 234 567 8900</li>
+              <li><i class="fas fa-envelope mr-2"></i>info@schoolplus.com</li>
+              <li>
+                <i class="fas fa-map-marker-alt mr-2"></i>123 Education St
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Follow Us</h3>
+            <div class="flex space-x-4 text-gray-600">
+              <a href="#" class="hover:text-blue-600"
+                ><i class="fab fa-facebook-f"></i
+              ></a>
+              <a href="#" class="hover:text-blue-600"
+                ><i class="fab fa-twitter"></i
+              ></a>
+              <a href="#" class="hover:text-blue-600"
+                ><i class="fab fa-instagram"></i
+              ></a>
+              <a href="#" class="hover:text-blue-600"
+                ><i class="fab fa-linkedin-in"></i
+              ></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Initialize AOS -->
+    <script>
+      AOS.init({
+        duration: 1000,
+        easing: "ease-in-out",
+        once: true,
+        mirror: false,
+      });
+    </script>
+  </body>
+</html>
