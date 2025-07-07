@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
   </head>
   <body class="bg-gray-50">
-    <!-- Header (same as before) -->
+    <!-- Header -->
     <header class="fixed w-full bg-white shadow-lg z-50">
       <nav class="container mx-auto px-6 py-4">
         <div class="flex items-center justify-between">
@@ -161,7 +161,7 @@
                         </h3>
                         <button
                           @click="removeFromCart(index)"
-                          class="text-gray-400 hover:text-red-500"
+                          class="text-gray-400 hover:text-red-500 transition"
                         >
                           <i class="fas fa-times"></i>
                         </button>
@@ -175,7 +175,7 @@
                         >
                           <button
                             @click="decreaseQuantity(index)"
-                            class="px-3 py-1 text-gray-500 hover:bg-gray-100 rounded-l-full"
+                            class="px-3 py-1 text-gray-500 hover:bg-gray-100 rounded-l-full transition"
                             :disabled="item.quantity <= 1"
                           >
                             <i class="fas fa-minus"></i>
@@ -183,13 +183,13 @@
                           <span class="px-3">{{ item.quantity }}</span>
                           <button
                             @click="increaseQuantity(index)"
-                            class="px-3 py-1 text-gray-500 hover:bg-gray-100 rounded-r-full"
+                            class="px-3 py-1 text-gray-500 hover:bg-gray-100 rounded-r-full transition"
                           >
                             <i class="fas fa-plus"></i>
                           </button>
                         </div>
                         <span class="font-bold text-gray-800"
-                          >${{ (item.price * item.quantity).toFixed(2) }}</span
+                          >MUR {{ (item.price * item.quantity).toFixed(2) }}</span
                         >
                       </div>
                     </div>
@@ -208,7 +208,7 @@
               <div class="space-y-3 mb-6">
                 <div class="flex justify-between">
                   <span class="text-gray-600">Subtotal</span>
-                  <span class="font-medium">${{ subtotal.toFixed(2) }}</span>
+                  <span class="font-medium">MUR {{ subtotal.toFixed(2) }}</span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-600">Shipping</span>
@@ -216,12 +216,12 @@
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-600">Tax</span>
-                  <span class="font-medium">${{ tax.toFixed(2) }}</span>
+                  <span class="font-medium">MUR {{ tax.toFixed(2) }}</span>
                 </div>
                 <div class="border-t border-gray-200 pt-3 flex justify-between">
                   <span class="font-bold text-gray-800">Total</span>
                   <span class="font-bold text-blue-600 text-lg"
-                    >${{ total.toFixed(2) }}</span
+                    >MUR {{ total.toFixed(2) }}</span
                   >
                 </div>
               </div>
@@ -248,7 +248,7 @@
       </main>
     </div>
 
-    <!-- Footer (same as before) -->
+    <!-- Footer -->
     <footer class="bg-gray-50 mt-20">
       <div class="container mx-auto px-6 py-12">
         <div class="grid md:grid-cols-4 gap-8">
@@ -303,25 +303,11 @@
     </footer>
 
     <script>
-
       // Vue app for cart functionality
       new Vue({
         el: "#app",
         data: {
-          cartItems: [
-            {
-              title: "Dune",
-              author: "Frank Herbert",
-              price: 19.99,
-              quantity: 1,
-            },
-            {
-              title: "Harry Potter and the Sorcerer's Stone",
-              author: "J.K. Rowling",
-              price: 15.99,
-              quantity: 2,
-            },
-          ],
+          cartItems: []
         },
         computed: {
           subtotal() {
@@ -337,21 +323,42 @@
             return this.subtotal + this.tax;
           },
         },
+        mounted() {
+          this.loadCartFromStorage();
+        },
         methods: {
+          loadCartFromStorage() {
+            const savedCart = localStorage.getItem('cartItems');
+            if (savedCart) {
+              this.cartItems = JSON.parse(savedCart);
+            }
+          },
+          saveCartToStorage() {
+            localStorage.setItem('cartItems', JSON.stringify(this.cartItems));
+          },
           removeFromCart(index) {
             this.cartItems.splice(index, 1);
+            this.saveCartToStorage();
           },
           increaseQuantity(index) {
             this.cartItems[index].quantity++;
+            this.saveCartToStorage();
           },
           decreaseQuantity(index) {
             if (this.cartItems[index].quantity > 1) {
               this.cartItems[index].quantity--;
+              this.saveCartToStorage();
             }
           },
           checkout() {
-            alert("Order placed successfully!");
+            if (this.cartItems.length === 0) {
+              alert("Your cart is empty!");
+              return;
+            }
+            
+            alert(`Order placed successfully! Total: MUR ${this.total.toFixed(2)}`);
             this.cartItems = [];
+            this.saveCartToStorage();
           },
         },
       });

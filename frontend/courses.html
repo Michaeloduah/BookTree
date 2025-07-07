@@ -28,6 +28,24 @@
       .float-animation {
         animation: float 3s ease-in-out infinite;
       }
+      .cart-notification {
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: #10b981;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        z-index: 1000;
+        transform: translateX(100%);
+        opacity: 0;
+        transition: all 0.3s ease;
+      }
+      .cart-notification.show {
+        transform: translateX(0);
+        opacity: 1;
+      }
     </style>
   </head>
   <body class="bg-white">
@@ -65,9 +83,9 @@
             <li>
               <a
                 href="cart.html"
-                class="text-gray-700 hover:text-blue-600 transition-colors duration-300"
-                >Cart</a
-              >
+                class="text-gray-700 hover:text-blue-600 transition-colors duration-300 relative"
+                >Cart
+              </a>
             </li>
           </ul>
           <div class="space-x-4 hidden md:block">
@@ -130,6 +148,12 @@
         });
       </script>
     </header>
+
+    <!-- Cart Notification -->
+    <div id="cart-notification" class="cart-notification">
+      <i class="fas fa-check-circle mr-2"></i>
+      <span>Item added to cart!</span>
+    </div>
 
     <div id="app">
       <main class="container mx-auto px-6 pt-28 pb-16">
@@ -194,6 +218,7 @@
                       <i class="far fa-heart"></i>
                     </button>
                     <button
+                      @click="addToCart(book)"
                       class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition text-sm font-medium flex items-center"
                     >
                       <i class="fas fa-shopping-cart mr-2 text-xs"></i> Add
@@ -273,6 +298,7 @@
         new Vue({
           el: "#app",
           data: {
+            cartCount: 0,
             categories: [
               {
                 name: "Science Fiction",
@@ -353,6 +379,53 @@
               },
             ],
           },
+          mounted() {
+            this.updateCartCount();
+          },
+          methods: {
+            addToCart(book) {
+              // Get existing cart items from localStorage
+              let cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
+              
+              // Check if item already exists in cart
+              const existingItemIndex = cartItems.findIndex(item => item.title === book.title);
+              
+              if (existingItemIndex !== -1) {
+                // If item exists, increase quantity
+                cartItems[existingItemIndex].quantity += 1;
+              } else {
+                // If item doesn't exist, add new item
+                cartItems.push({
+                  title: book.title,
+                  author: book.author,
+                  description: book.description,
+                  price: book.price,
+                  quantity: 1
+                });
+              }
+              
+              // Save updated cart to localStorage
+              localStorage.setItem('cartItems', JSON.stringify(cartItems));
+              
+              // Update cart count
+              this.updateCartCount();
+              
+              // Show notification
+              this.showNotification();
+            },
+            updateCartCount() {
+              const cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
+              this.cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+            },
+            showNotification() {
+              const notification = document.getElementById('cart-notification');
+              notification.classList.add('show');
+              
+              setTimeout(() => {
+                notification.classList.remove('show');
+              }, 3000);
+            }
+          }
         });
       });
     </script>
