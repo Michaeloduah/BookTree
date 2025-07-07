@@ -17,7 +17,10 @@
     <header class="fixed w-full bg-white shadow-lg z-50">
       <nav class="container mx-auto px-6 py-4">
         <div class="flex items-center justify-between">
-          <div class="text-2xl font-bold text-blue-600">SchoolPlus</div>
+          <div class="text-2xl font-bold text-blue-600 float-animation">
+            SchoolPlus
+          </div>
+          <!-- Hamburger Button (Mobile) -->
           <button
             id="mobile-menu-button"
             class="md:hidden text-3xl text-blue-600 focus:outline-none"
@@ -25,6 +28,7 @@
           >
             <i class="fas fa-bars"></i>
           </button>
+          <!-- Desktop Menu -->
           <ul class="hidden md:flex space-x-8">
             <li>
               <a
@@ -42,16 +46,9 @@
             </li>
             <li>
               <a
-                href="#about"
+                href="cart.html"
                 class="text-gray-700 hover:text-blue-600 transition-colors duration-300"
-                >About</a
-              >
-            </li>
-            <li>
-              <a
-                href="#contact"
-                class="text-gray-700 hover:text-blue-600 transition-colors duration-300"
-                >Contact</a
+                >Cart</a
               >
             </li>
           </ul>
@@ -59,15 +56,18 @@
             <a
               href="login.html"
               class="px-6 py-2 text-blue-600 border-2 border-blue-600 rounded-full hover:bg-blue-50 transition-all duration-300"
-              >Login</a
             >
+              Login
+            </a>
             <a
               href="register.html"
               class="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all duration-300 hover:shadow-lg"
-              >Sign Up</a
             >
+              Sign Up
+            </a>
           </div>
         </div>
+        <!-- Mobile Menu -->
         <div
           id="mobile-menu"
           class="md:hidden hidden flex-col space-y-4 mt-4 bg-white rounded-xl shadow-lg px-6 py-4"
@@ -83,29 +83,34 @@
             >Courses</a
           >
           <a
-            href="#about"
+            href="cart.html"
             class="block text-gray-700 hover:text-blue-600 transition-colors duration-300"
-            >About</a
-          >
-          <a
-            href="#contact"
-            class="block text-gray-700 hover:text-blue-600 transition-colors duration-300"
-            >Contact</a
+            >Cart</a
           >
           <div class="flex flex-col space-y-2 pt-2">
             <a
               href="login.html"
               class="px-6 py-2 text-blue-600 border-2 border-blue-600 rounded-full hover:bg-blue-50 transition-all duration-300 text-center"
-              >Login</a
             >
+              Login
+            </a>
             <a
               href="register.html"
               class="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all duration-300 hover:shadow-lg text-center"
-              >Sign Up</a
             >
+              Sign Up
+            </a>
           </div>
         </div>
       </nav>
+      <script>
+        // Hamburger menu toggle
+        const menuBtn = document.getElementById("mobile-menu-button");
+        const mobileMenu = document.getElementById("mobile-menu");
+        menuBtn.addEventListener("click", () => {
+          mobileMenu.classList.toggle("hidden");
+        });
+      </script>
     </header>
 
     <div id="app">
@@ -298,12 +303,6 @@
     </footer>
 
     <script>
-      // Mobile menu toggle (same as before)
-      const menuBtn = document.getElementById("mobile-menu-button");
-      const mobileMenu = document.getElementById("mobile-menu");
-      menuBtn.addEventListener("click", () => {
-        mobileMenu.classList.toggle("hidden");
-      });
 
       // Vue app for cart functionality
       new Vue({
