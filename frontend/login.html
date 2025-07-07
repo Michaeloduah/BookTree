@@ -1,68 +1,412 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Login Page</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SchoolPlus - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
     <style>
-        body {
-            background: #f4f4f4;
-            font-family: Arial, sans-serif;
-            display: flex;
-            height: 100vh;
-            align-items: center;
-            justify-content: center;
-        }
-        .login-container {
-            background: #fff;
-            padding: 2rem 2.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            width: 320px;
-        }
-        .login-container h2 {
-            margin-bottom: 1.5rem;
-            text-align: center;
-            color: #333;
-        }
-        .login-container label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #555;
-        }
-        .login-container input[type="text"],
-        .login-container input[type="password"] {
-            width: 100%;
-            padding: 0.5rem;
-            margin-bottom: 1.2rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .login-container button {
-            width: 100%;
-            padding: 0.6rem;
-            background: #0078d7;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            font-size: 1rem;
-            cursor: pointer;
-        }
-        .login-container button:hover {
-            background: #005fa3;
-        }
+      @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0px); }
+      }
+      .float-animation {
+        animation: float 3s ease-in-out infinite;
+      }
+      .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 24px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 1000;
+        transform: translateX(100%);
+        opacity: 0;
+        transition: all 0.3s ease;
+      }
+      .notification.show {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      .notification.success {
+        background-color: #10b981;
+      }
+      .notification.error {
+        background-color: #ef4444;
+      }
+      .loading-spinner {
+        border: 2px solid #f3f4f6;
+        border-top: 2px solid #3b82f6;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
     </style>
-</head>
-<body>
-    <form class="login-container" action="/login" method="POST">
-        <h2>Login</h2>
-        <label for="username">Username</label>
-        <input type="text" id="username" name="username" required autocomplete="username">
+  </head>
+  <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Header -->
+    <header class="fixed w-full bg-white shadow-lg z-50">
+      <nav class="container mx-auto px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div class="text-2xl font-bold text-blue-600 float-animation">
+            <a href="index.html">SchoolPlus</a>
+          </div>
+          <!-- Desktop Menu -->
+          <ul class="hidden md:flex space-x-8">
+            <li>
+              <a
+                href="index.html"
+                class="text-gray-700 hover:text-blue-600 transition-colors duration-300"
+                >Home</a
+              >
+            </li>
+            <li>
+              <a
+                href="courses.html"
+                class="text-gray-700 hover:text-blue-600 transition-colors duration-300"
+                >Courses</a
+              >
+            </li>
+            <li>
+              <a
+                href="cart.html"
+                class="text-gray-700 hover:text-blue-600 transition-colors duration-300"
+                >Cart</a
+              >
+            </li>
+          </ul>
+          <div class="space-x-4 hidden md:block">
+            <a
+              href="login.html"
+              class="px-6 py-2 text-blue-600 border-2 border-blue-600 rounded-full hover:bg-blue-50 transition-all duration-300"
+            >
+              Login
+            </a>
+            <a
+              href="register.html"
+              class="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all duration-300 hover:shadow-lg"
+            >
+              Sign Up
+            </a>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Notification -->
+    <div id="notification" class="notification">
+      <span id="notification-message"></span>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex items-center justify-center min-h-screen pt-20">
+      <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md mx-4">
+        <div class="text-center mb-8">
+          <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+            <i class="fas fa-user text-2xl text-blue-600"></i>
+          </div>
+          <h2 class="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h2>
+          <p class="text-gray-600">Sign in to your SchoolPlus account</p>
+        </div>
+
+        <form id="loginForm" class="space-y-6">
+          <div class="space-y-4">
+            <div>
+              <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <div class="relative">
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  required
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-12 transition-all duration-300"
+                  placeholder="Enter your email"
+                />
+                <i class="fas fa-envelope absolute left-4 top-4 text-gray-400"></i>
+              </div>
+            </div>
+
+            <div>
+              <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <div class="relative">
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  required
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-12 pr-12 transition-all duration-300"
+                  placeholder="Enter your password"
+                />
+                <i class="fas fa-lock absolute left-4 top-4 text-gray-400"></i>
+                <button
+                  type="button"
+                  id="togglePassword"
+                  class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 focus:outline-none"
+                >
+                  <i class="fas fa-eye" id="passwordIcon"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <input
+                id="remember"
+                name="remember"
+                type="checkbox"
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label for="remember" class="ml-2 block text-sm text-gray-700">
+                Remember me
+              </label>
+            </div>
+            <a href="#" class="text-sm text-blue-600 hover:text-blue-500 font-medium">
+              Forgot password?
+            </a>
+          </div>
+
+          <button
+            type="submit"
+            id="loginButton"
+            class="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 font-medium"
+          >
+            <span id="loginButtonText">Sign In</span>
+            <div id="loginSpinner" class="loading-spinner ml-2 hidden"></div>
+          </button>
+        </form>
+
+        <div class="mt-8 text-center">
+          <p class="text-gray-600">
+            Don't have an account?
+            <a href="register.html" class="text-blue-600 hover:text-blue-500 font-medium">
+              Sign up here
+            </a>
+          </p>
+        </div>
+
+        <!-- Demo Credentials -->
+        <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+          <h3 class="text-sm font-medium text-gray-800 mb-2">Demo Accounts:</h3>
+          <div class="space-y-2 text-xs">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600">Admin:</span>
+              <button
+                type="button"
+                onclick="fillCredentials('admin@schoolplus.com', 'admin123')"
+                class="text-blue-600 hover:text-blue-800 font-medium"
+              >
+                admin@schoolplus.com
+              </button>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600">User:</span>
+              <button
+                type="button"
+                onclick="fillCredentials('john@example.com', 'password123')"
+                class="text-blue-600 hover:text-blue-800 font-medium"
+              >
+                john@example.com
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      // Configuration
+      const API_BASE_URL = 'http://localhost:3000/api';
+      
+      // DOM Elements
+      const loginForm = document.getElementById('loginForm');
+      const loginButton = document.getElementById('loginButton');
+      const loginButtonText = document.getElementById('loginButtonText');
+      const loginSpinner = document.getElementById('loginSpinner');
+      const notification = document.getElementById('notification');
+      const notificationMessage = document.getElementById('notification-message');
+      const togglePassword = document.getElementById('togglePassword');
+      const passwordInput = document.getElementById('password');
+      const passwordIcon = document.getElementById('passwordIcon');
+
+      // Password visibility toggle
+      togglePassword.addEventListener('click', function() {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        passwordIcon.classList.toggle('fa-eye');
+        passwordIcon.classList.toggle('fa-eye-slash');
+      });
+
+      // Fill demo credentials
+      function fillCredentials(email, password) {
+        document.getElementById('email').value = email;
+        document.getElementById('password').value = password;
+      }
+
+      // Show notification
+      function showNotification(message, type = 'success') {
+        notificationMessage.textContent = message;
+        notification.className = `notification ${type} show`;
         
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" required autocomplete="current-password">
+        setTimeout(() => {
+          notification.classList.remove('show');
+        }, 5000);
+      }
+
+      // Set loading state
+      function setLoading(isLoading) {
+        if (isLoading) {
+          loginButton.disabled = true;
+          loginButtonText.textContent = 'Signing in...';
+          loginSpinner.classList.remove('hidden');
+        } else {
+          loginButton.disabled = false;
+          loginButtonText.textContent = 'Sign In';
+          loginSpinner.classList.add('hidden');
+        }
+      }
+
+      // Store user data and token
+      function storeUserData(userData, token) {
+        // Store in localStorage
+        localStorage.setItem('userToken', token);
+        localStorage.setItem('userData', JSON.stringify(userData));
         
-        <button type="submit">Login</button>
-    </form>
-</body>
+        // Store in sessionStorage for this session
+        sessionStorage.setItem('userToken', token);
+        sessionStorage.setItem('userData', JSON.stringify(userData));
+      }
+
+      // Login form submission
+      loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(loginForm);
+        const email = formData.get('email');
+        const password = formData.get('password');
+        const remember = formData.get('remember');
+
+        // Basic validation
+        if (!email || !password) {
+          showNotification('Please fill in all fields', 'error');
+          return;
+        }
+
+        setLoading(true);
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/users/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: email,
+              password: password
+            })
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            // Login successful
+            showNotification(`Welcome back, ${data.user.name}!`, 'success');
+            
+            // Store user data and token
+            storeUserData(data.user, data.token);
+            
+            // If remember me is not checked, clear localStorage after session
+            if (!remember) {
+              localStorage.removeItem('userToken');
+              localStorage.removeItem('userData');
+            }
+            
+            // Redirect after 2 seconds
+            setTimeout(() => {
+              // Check if user is admin
+              if (data.user.role === 'admin') {
+                window.location.href = 'admin-dashboard.html';
+              } else {
+                window.location.href = 'courses.html';
+              }
+            }, 2000);
+            
+          } else {
+            // Login failed
+            showNotification(data.error || 'Login failed. Please try again.', 'error');
+          }
+        } catch (error) {
+          console.error('Login error:', error);
+          showNotification('Network error. Please check your connection and try again.', 'error');
+        } finally {
+          setLoading(false);
+        }
+      });
+
+      // Check if user is already logged in
+      window.addEventListener('load', function() {
+        const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+        const userData = localStorage.getItem('userData') || sessionStorage.getItem('userData');
+        
+        if (token && userData) {
+          try {
+            const user = JSON.parse(userData);
+            showNotification(`You're already logged in as ${user.name}`, 'success');
+            
+            // Redirect after 2 seconds
+            setTimeout(() => {
+              if (user.role === 'admin') {
+                window.location.href = 'admin-dashboard.html';
+              } else {
+                window.location.href = 'courses.html';
+              }
+            }, 2000);
+          } catch (error) {
+            // Clear invalid data
+            localStorage.removeItem('userToken');
+            localStorage.removeItem('userData');
+            sessionStorage.removeItem('userToken');
+            sessionStorage.removeItem('userData');
+          }
+        }
+      });
+
+      // Add input validation styling
+      const inputs = document.querySelectorAll('input[required]');
+      inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+          if (this.value.trim() === '') {
+            this.classList.add('border-red-500');
+            this.classList.remove('border-gray-300');
+          } else {
+            this.classList.remove('border-red-500');
+            this.classList.add('border-gray-300');
+          }
+        });
+
+        input.addEventListener('input', function() {
+          if (this.classList.contains('border-red-500')) {
+            this.classList.remove('border-red-500');
+            this.classList.add('border-gray-300');
+          }
+        });
+      });
+    </script>
+  </body>
 </html>

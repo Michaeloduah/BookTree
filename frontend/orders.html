@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SchoolPlus - My Orders</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script src="js/auth.js"></script>
+    <style>
+      .loading-spinner {
+        border: 3px solid #f3f4f6;
+        border-top: 3px solid #3b82f6;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      .status-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+      }
+      .status-pending {
+        background-color: #fef3c7;
+        color: #92400e;
+      }
+      .status-confirmed {
+        background-color: #dbeafe;
+        color: #1e40af;
+      }
+      .status-processing {
+        background-color: #e0e7ff;
+        color: #5b21b6;
+      }
+      .status-shipped {
+        background-color: #bbf7d0;
+        color: #065f46;
+      }
+      .status-delivered {
+        background-color: #d1fae5;
+        color: #047857;
+      }
+      .status-cancelled {
+        background-color: #fee2e2;
+        color: #b91c1c;
+      }
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 50;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+      .modal.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <!-- Header -->
+    <header class="fixed w-full bg-white shadow-lg z-50">
+      <nav class="container mx-auto px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div class="text-2xl font-bold text-blue-600">
+            <a href="index.html">SchoolPlus</a>
+          </div>
+          <ul class="hidden md:flex space-x-8">
+            <li>
+              <a
+                href="index.html"
+                class="text-gray-700 hover:text-blue-600 transition-colors"
+                >Home</a
+              >
+            </li>
+            <li>
+              <a
+                href="courses.html"
+                class="text-gray-700 hover:text-blue-600 transition-colors"
+                >Courses</a
+              >
+            </li>
+            <li>
+              <a
+                href="cart.html"
+                class="text-gray-700 hover:text-blue-600 transition-colors"
+                >Cart</a
+              >
+            </li>
+            <li>
+              <a href="orders.html" class="text-blue-600 font-medium"
+                >My Orders</a
+              >
+            </li>
+          </ul>
+          <div id="auth-section" class="space-x-4 hidden md:block">
+            <button
+              onclick="logout()"
+              class="px-4 py-2 text-red-600 hover:text-red-800 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Order Detail Modal -->
+    <div id="orderModal" class="modal">
+      <div
+        class="bg-white rounded-lg max-w-2xl w-full m-4 max-h-screen overflow-y-auto"
+      >
+        <div class="p-6">
+          <div class="flex justify-between items-start mb-4">
+            <h2 class="text-2xl font-bold text-gray-800">Order Details</h2>
+            <button
+              onclick="closeOrderModal()"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+
+          <div id="orderDetails" class="space-y-6">
+            <!-- Order details will be populated here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="app">
+      <!-- Auth Check -->
+      <div
+        v-if="!isAuthenticated"
+        class="flex items-center justify-center min-h-screen"
+      >
+        <div class="text-center">
+          <i class="fas fa-lock text-5xl text-gray-300 mb-4"></i>
+          <h3 class="text-xl font-medium text-gray-600 mb-2">Login Required</h3>
+          <p class="text-gray-500 mb-4">Please login to view your orders</p>
+          <a
+            href="login.html"
+            class="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition inline-block"
+          >
+            Login Now
+          </a>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div
+        v-else-if="loading"
+        class="flex items-center justify-center min-h-screen"
+      >
+        <div class="text-center">
+          <div class="loading-spinner mx-auto mb-4"></div>
+          <p class="text-gray-600">Loading your orders...</p>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <main v-else class="container mx-auto px-6 pt-28 pb-16">
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold text-gray-800 mb-2">My Orders</h1>
+          <p class="text-gray-600">Track and manage your book orders</p>
+        </div>
+
+        <!-- Order Statistics -->
+        <div
+          v-if="orderStats"
+          class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
+        >
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+              <div class="bg-blue-100 rounded-full p-3">
+                <i class="fas fa-shopping-bag text-blue-600 text-xl"></i>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm text-gray-600">Total Orders</p>
+                <p class="text-2xl font-bold text-gray-800">
+                  {{ orderStats.totalOrders }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+              <div class="bg-green-100 rounded-full p-3">
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm text-gray-600">Completed</p>
+                <p class="text-2xl font-bold text-gray-800">
+                  {{ orderStats.completedOrders }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+              <div class="bg-yellow-100 rounded-full p-3">
+                <i class="fas fa-clock text-yellow-600 text-xl"></i>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm text-gray-600">Pending</p>
+                <p class="text-2xl font-bold text-gray-800">
+                  {{ orderStats.pendingOrders }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+              <div class="bg-purple-100 rounded-full p-3">
+                <i class="fas fa-dollar-sign text-purple-600 text-xl"></i>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm text-gray-600">Total Spent</p>
+                <p class="text-2xl font-bold text-gray-800">
+                  MUR {{ orderStats.totalRevenue?.toFixed(2) || '0.00' }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter and Search -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div class="flex flex-col md:flex-row gap-4">
+            <div class="flex-1">
+              <input
+                v-model="searchQuery"
+                @input="handleSearch"
+                type="text"
+                placeholder="Search orders by order number..."
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <select
+              v-model="statusFilter"
+              @change="loadOrders"
+              class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="processing">Processing</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Orders List -->
+        <div v-if="orders.length === 0" class="text-center py-12">
+          <i class="fas fa-receipt text-5xl text-gray-300 mb-4"></i>
+          <h3 class="text-xl font-medium text-gray-600 mb-2">
+            No orders found
+          </h3>
+          <p class="text-gray-500 mb-4">You haven't placed any orders yet</p>
+          <a
+            href="courses.html"
+            class="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition inline-block"
+          >
+            Start Shopping
+          </a>
+        </div>
+
+        <div v-else class="space-y-6">
+          <div
+            v-for="order in orders"
+            :key="order._id"
+            class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+          >
+            <div class="p-6">
+              <div
+                class="flex flex-col md:flex-row md:items-center justify-between mb-4"
+              >
+                <div>
+                  <h3 class="text-lg font-bold text-gray-800 mb-1">
+                    Order #{{ order.orderNumber }}
+                  </h3>
+                  <p class="text-sm text-gray-600">
+                    Placed on {{ formatDate(order.createdAt) }}
+                  </p>
+                </div>
+                <div class="flex items-center space-x-4 mt-4 md:mt-0">
+                  <span
+                    :class="getStatusClass(order.status)"
+                    class="status-badge"
+                  >
+                    {{ order.status }}
+                  </span>
+                  <span class="text-lg font-bold text-blue-600">
+                    MUR {{ order.totalAmount.toFixed(2) }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="border-t border-gray-200 pt-4">
+                <div class="flex flex-wrap gap-2 mb-4">
+                  <span
+                    v-for="item in order.items.slice(0, 3)"
+                    :key="item._id"
+                    class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
+                  >
+                    {{ item.title }} ({{ item.quantity }})
+                  </span>
+                  <span
+                    v-if="order.items.length > 3"
+                    class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
+                  >
+                    +{{ order.items.length - 3 }} more
+                  </span>
+                </div>
+
+                <div
+                  class="flex flex-col md:flex-row gap-4 md:items-center justify-between"
+                >
+                  <div class="text-sm text-gray-600">
+                    <i class="fas fa-map-marker-alt mr-1"></i>
+                    {{ order.shippingAddress.address }}, {{
+                    order.shippingAddress.city }}
+                  </div>
+
+                  <div class="flex space-x-2">
+                    <button
+                      @click="viewOrderDetails(order)"
+                      class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
+                    >
+                      <i class="fas fa-eye mr-1"></i>
+                      View Details
+                    </button>
+
+                    <button
+                      v-if="order.status === 'pending'"
+                      @click="cancelOrder(order)"
+                      class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
+                    >
+                      <i class="fas fa-times mr-1"></i>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="pagination.pages > 1" class="flex justify-center mt-8">
+          <div class="flex space-x-2">
+            <button
+              @click="goToPage(pagination.page - 1)"
+              :disabled="pagination.page <= 1"
+              class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <button
+              v-for="page in getPageNumbers()"
+              :key="page"
+              @click="goToPage(page)"
+              :class="page === pagination.page ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
+              class="px-4 py-2 border border-gray-300 rounded-lg"
+            >
+              {{ page }}
+            </button>
+            <button
+              @click="goToPage(pagination.page + 1)"
+              :disabled="pagination.page >= pagination.pages"
+              class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // Modal functions
+      function closeOrderModal() {
+        document.getElementById("orderModal").classList.remove("show");
+      }
+
+      // Close modal when clicking outside
+      document
+        .getElementById("orderModal")
+        .addEventListener("click", function (e) {
+          if (e.target === this) {
+            closeOrderModal();
+          }
+        });
+
+      const app = new Vue({
+        el: "#app",
+        data: {
+          orders: [],
+          orderStats: null,
+          loading: true,
+          isAuthenticated: false,
+          searchQuery: "",
+          statusFilter: "",
+          pagination: {
+            page: 1,
+            limit: 10,
+            total: 0,
+            pages: 1,
+          },
+        },
+        mounted() {
+          this.checkAuthentication();
+        },
+        methods: {
+          checkAuthentication() {
+            this.isAuthenticated = authManager.isLoggedIn();
+            if (this.isAuthenticated) {
+              this.loadOrders();
+              this.loadOrderStats();
+            } else {
+              this.loading = false;
+            }
+          },
+
+          async loadOrders() {
+            this.loading = true;
+            try {
+              let url = `/orders?page=${this.pagination.page}&limit=${this.pagination.limit}`;
+              if (this.statusFilter) {
+                url += `&status=${this.statusFilter}`;
+              }
+
+              const response = await authManager.makeAuthenticatedRequest(url);
+              if (response && response.ok) {
+                const data = await response.json();
+                this.orders = data.data;
+                this.pagination = data.pagination;
+              }
+            } catch (error) {
+              console.error("Error loading orders:", error);
+            } finally {
+              this.loading = false;
+            }
+          },
+
+          async loadOrderStats() {
+            try {
+              const response = await authManager.makeAuthenticatedRequest(
+                "/orders/stats"
+              );
+              if (response && response.ok) {
+                const data = await response.json();
+                this.orderStats = data.data;
+              }
+            } catch (error) {
+              console.error("Error loading order stats:", error);
+            }
+          },
+
+          async viewOrderDetails(order) {
+            try {
+              const response = await authManager.makeAuthenticatedRequest(
+                `/orders/${order._id}`
+              );
+              if (response && response.ok) {
+                const data = await response.json();
+                const orderDetails = data.data;
+                this.showOrderModal(orderDetails);
+              }
+            } catch (error) {
+              console.error("Error loading order details:", error);
+            }
+          },
+
+          showOrderModal(order) {
+            const orderDetailsHTML = `
+              <div class="border-b border-gray-200 pb-4 mb-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h3 class="text-lg font-bold text-gray-800">Order #${
+                      order.orderNumber
+                    }</h3>
+                    <p class="text-sm text-gray-600">Placed on ${this.formatDate(
+                      order.createdAt
+                    )}</p>
+                  </div>
+                  <span class="${this.getStatusClass(
+                    order.status
+                  )} status-badge">${order.status}</span>
+                </div>
+              </div>
+
+              <div class="mb-6">
+                <h4 class="font-semibold text-gray-800 mb-3">Order Items</h4>
+                <div class="space-y-3">
+                  ${order.items
+                    .map(
+                      (item) => `
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                      <div>
+                        <p class="font-medium text-gray-800">${item.title}</p>
+                        <p class="text-sm text-gray-600">by ${item.author}</p>
+                        <p class="text-sm text-gray-500">Quantity: ${
+                          item.quantity
+                        }</p>
+                      </div>
+                      <p class="font-semibold text-gray-800">MUR ${item.subtotal.toFixed(
+                        2
+                      )}</p>
+                    </div>
+                  `
+                    )
+                    .join("")}
+                </div>
+              </div>
+
+              <div class="mb-6">
+                <h4 class="font-semibold text-gray-800 mb-3">Shipping Information</h4>
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <p class="text-gray-700">${order.shippingAddress.address}</p>
+                  <p class="text-gray-700">${order.shippingAddress.city}</p>
+                </div>
+              </div>
+
+              <div class="mb-6">
+                <h4 class="font-semibold text-gray-800 mb-3">Payment Method</h4>
+                <p class="text-gray-700">${order.paymentMethod
+                  .replace("_", " ")
+                  .replace(/\b\w/g, (l) => l.toUpperCase())}</p>
+              </div>
+
+              ${
+                order.notes
+                  ? `
+                <div class="mb-6">
+                  <h4 class="font-semibold text-gray-800 mb-3">Order Notes</h4>
+                  <p class="text-gray-700">${order.notes}</p>
+                </div>
+              `
+                  : ""
+              }
+
+              <div class="border-t border-gray-200 pt-4">
+                <div class="space-y-2">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Subtotal:</span>
+                    <span class="text-gray-800">MUR ${(
+                      order.totalAmount / 1.08
+                    ).toFixed(2)}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Tax (8%):</span>
+                    <span class="text-gray-800">MUR ${(
+                      (order.totalAmount * 0.08) /
+                      1.08
+                    ).toFixed(2)}</span>
+                  </div>
+                  <div class="flex justify-between font-bold text-lg border-t border-gray-200 pt-2">
+                    <span class="text-gray-800">Total:</span>
+                    <span class="text-blue-600">MUR ${order.totalAmount.toFixed(
+                      2
+                    )}</span>
+                  </div>
+                </div>
+              </div>
+
+              ${
+                order.statusHistory && order.statusHistory.length > 0
+                  ? `
+                <div class="mt-6">
+                  <h4 class="font-semibold text-gray-800 mb-3">Order History</h4>
+                  <div class="space-y-2">
+                    ${order.statusHistory
+                      .map(
+                        (history) => `
+                      <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-600">${history.status
+                          .replace("_", " ")
+                          .toUpperCase()}</span>
+                        <span class="text-gray-500">${this.formatDate(
+                          history.timestamp
+                        )}</span>
+                      </div>
+                      ${
+                        history.notes
+                          ? `<p class="text-xs text-gray-500">${history.notes}</p>`
+                          : ""
+                      }
+                    `
+                      )
+                      .join("")}
+                  </div>
+                </div>
+              `
+                  : ""
+              }
+            `;
+
+            document.getElementById("orderDetails").innerHTML =
+              orderDetailsHTML;
+            document.getElementById("orderModal").classList.add("show");
+          },
+
+          async cancelOrder(order) {
+            if (
+              !confirm(
+                `Are you sure you want to cancel order #${order.orderNumber}?`
+              )
+            )
+              return;
+
+            try {
+              const response = await authManager.updateOrderStatus(
+                order._id,
+                "cancelled",
+                "Cancelled by customer"
+              );
+              if (response) {
+                this.loadOrders();
+                this.loadOrderStats();
+                alert("Order cancelled successfully");
+              }
+            } catch (error) {
+              console.error("Error cancelling order:", error);
+              alert("Failed to cancel order");
+            }
+          },
+
+          handleSearch() {
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(() => {
+              this.pagination.page = 1;
+              this.loadOrders();
+            }, 500);
+          },
+
+          goToPage(page) {
+            if (page >= 1 && page <= this.pagination.pages) {
+              this.pagination.page = page;
+              this.loadOrders();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          },
+
+          getPageNumbers() {
+            const pages = [];
+            const current = this.pagination.page;
+            const total = this.pagination.pages;
+
+            if (total <= 7) {
+              for (let i = 1; i <= total; i++) {
+                pages.push(i);
+              }
+            } else {
+              if (current <= 4) {
+                for (let i = 1; i <= 5; i++) pages.push(i);
+                pages.push("...");
+                pages.push(total);
+              } else if (current >= total - 3) {
+                pages.push(1);
+                pages.push("...");
+                for (let i = total - 4; i <= total; i++) pages.push(i);
+              } else {
+                pages.push(1);
+                pages.push("...");
+                for (let i = current - 1; i <= current + 1; i++) pages.push(i);
+                pages.push("...");
+                pages.push(total);
+              }
+            }
+
+            return pages.filter((p) => p !== "...");
+          },
+
+          formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+          },
+
+          getStatusClass(status) {
+            return `status-${status}`;
+          },
+        },
+      });
+
+      // Global logout function
+      window.logout = function () {
+        authManager.logout();
+      };
+
+      // Make app globally accessible
+      window.app = app;
+    </script>
+  </body>
+</html>

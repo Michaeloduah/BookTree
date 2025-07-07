@@ -11,6 +11,69 @@
     />
     <!-- Vue 2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <!-- Auth utilities -->
+    <script src="js/auth.js"></script>
+    <style>
+      .notification {
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 1000;
+        transform: translateX(100%);
+        opacity: 0;
+        transition: all 0.3s ease;
+      }
+      .notification.show {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      .notification.success {
+        background: #10b981;
+      }
+      .notification.error {
+        background: #ef4444;
+      }
+      .notification.info {
+        background: #3b82f6;
+      }
+      .loading-spinner {
+        border: 2px solid #f3f4f6;
+        border-top: 2px solid #3b82f6;
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      .skeleton {
+        animation: pulse 1.5s ease-in-out infinite;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+      }
+      @keyframes loading {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+      .cart-item {
+        transition: all 0.3s ease;
+      }
+      .cart-item.removing {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    </style>
   </head>
   <body class="bg-gray-50">
     <!-- Header -->
@@ -18,7 +81,7 @@
       <nav class="container mx-auto px-6 py-4">
         <div class="flex items-center justify-between">
           <div class="text-2xl font-bold text-blue-600 float-animation">
-            SchoolPlus
+            <a href="index.html">SchoolPlus</a>
           </div>
           <!-- Hamburger Button (Mobile) -->
           <button
@@ -52,7 +115,7 @@
               >
             </li>
           </ul>
-          <div class="space-x-4 hidden md:block">
+          <div id="auth-buttons" class="space-x-4 hidden md:block">
             <a
               href="login.html"
               class="px-6 py-2 text-blue-600 border-2 border-blue-600 rounded-full hover:bg-blue-50 transition-all duration-300"
@@ -87,7 +150,7 @@
             class="block text-gray-700 hover:text-blue-600 transition-colors duration-300"
             >Cart</a
           >
-          <div class="flex flex-col space-y-2 pt-2">
+          <div id="mobile-auth-buttons" class="flex flex-col space-y-2 pt-2">
             <a
               href="login.html"
               class="px-6 py-2 text-blue-600 border-2 border-blue-600 rounded-full hover:bg-blue-50 transition-all duration-300 text-center"
@@ -113,20 +176,88 @@
       </script>
     </header>
 
+    <!-- Notification -->
+    <div id="notification" class="notification">
+      <span id="notification-message"></span>
+    </div>
+
     <div id="app">
       <main class="container mx-auto px-6 pt-28 pb-16">
-        <div class="flex flex-col md:flex-row gap-8">
+        <!-- Authentication Check -->
+        <div v-if="!isAuthenticated" class="text-center py-12">
+          <i class="fas fa-lock text-5xl text-gray-300 mb-4"></i>
+          <h3 class="text-xl font-medium text-gray-600 mb-2">
+            Please Login to View Your Cart
+          </h3>
+          <p class="text-gray-500 mb-4">
+            You need to be logged in to access your shopping cart
+          </p>
+          <a
+            href="login.html"
+            class="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition inline-block"
+            >Login Now</a
+          >
+        </div>
+
+        <!-- Loading State -->
+        <div v-else-if="loading" class="flex flex-col md:flex-row gap-8">
+          <div class="md:w-2/3">
+            <div class="bg-white rounded-xl shadow-md p-6">
+              <div class="skeleton h-8 w-40 mb-6"></div>
+              <div v-for="n in 3" :key="n" class="border-b border-gray-100 py-4 last:border-0">
+                <div class="flex flex-col sm:flex-row gap-4">
+                  <div class="skeleton w-full sm:w-32 h-24 rounded-lg"></div>
+                  <div class="flex-1">
+                    <div class="skeleton h-6 mb-2"></div>
+                    <div class="skeleton h-4 mb-2 w-3/4"></div>
+                    <div class="flex justify-between items-center mt-2">
+                      <div class="skeleton h-8 w-20"></div>
+                      <div class="skeleton h-6 w-16"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="md:w-1/3">
+            <div class="bg-white rounded-xl shadow-md p-6">
+              <div class="skeleton h-6 w-32 mb-4"></div>
+              <div class="space-y-3 mb-6">
+                <div v-for="n in 4" :key="n" class="flex justify-between">
+                  <div class="skeleton h-4 w-20"></div>
+                  <div class="skeleton h-4 w-16"></div>
+                </div>
+              </div>
+              <div class="skeleton h-12 w-full"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cart Content -->
+        <div v-else class="flex flex-col md:flex-row gap-8">
           <!-- Cart Items -->
           <div class="md:w-2/3">
             <div class="bg-white rounded-xl shadow-md p-6">
               <div class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl font-bold text-gray-800">Your Cart</h1>
-                <span class="text-gray-500"
-                  >{{ cartItems.length }} {{ cartItems.length === 1 ? 'item' :
-                  'items' }}</span
-                >
+                <div class="flex items-center space-x-4">
+                  <span class="text-gray-500">
+                    {{ cartItems.length }} {{ cartItems.length === 1 ? 'item' : 'items' }}
+                  </span>
+                  <button
+                    v-if="cartItems.length > 0"
+                    @click="clearCart"
+                    :disabled="clearing"
+                    class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center"
+                  >
+                    <span v-if="clearing" class="loading-spinner mr-2"></span>
+                    <i v-else class="fas fa-trash mr-2"></i>
+                    Clear All
+                  </button>
+                </div>
               </div>
 
+              <!-- Empty Cart -->
               <div v-if="cartItems.length === 0" class="text-center py-12">
                 <i class="fas fa-shopping-cart text-5xl text-gray-300 mb-4"></i>
                 <h3 class="text-xl font-medium text-gray-600 mb-2">
@@ -142,11 +273,12 @@
                 >
               </div>
 
+              <!-- Cart Items List -->
               <div v-else>
                 <div
                   v-for="(item, index) in cartItems"
-                  :key="index"
-                  class="border-b border-gray-100 py-4 last:border-0"
+                  :key="`${item.title}-${index}`"
+                  class="cart-item border-b border-gray-100 py-4 last:border-0"
                 >
                   <div class="flex flex-col sm:flex-row gap-4">
                     <div
@@ -160,37 +292,51 @@
                           {{ item.title }}
                         </h3>
                         <button
-                          @click="removeFromCart(index)"
+                          @click="removeFromCart(item, index)"
+                          :disabled="removingItems[index]"
                           class="text-gray-400 hover:text-red-500 transition"
                         >
-                          <i class="fas fa-times"></i>
+                          <span v-if="removingItems[index]" class="loading-spinner"></span>
+                          <i v-else class="fas fa-times"></i>
                         </button>
                       </div>
                       <p class="text-gray-500 text-sm mb-2">
                         {{ item.author }}
+                      </p>
+                      <p v-if="item.description" class="text-gray-600 text-xs mb-3 line-clamp-2">
+                        {{ item.description }}
                       </p>
                       <div class="flex items-center justify-between mt-2">
                         <div
                           class="flex items-center border border-gray-200 rounded-full"
                         >
                           <button
-                            @click="decreaseQuantity(index)"
-                            class="px-3 py-1 text-gray-500 hover:bg-gray-100 rounded-l-full transition"
-                            :disabled="item.quantity <= 1"
+                            @click="decreaseQuantity(item, index)"
+                            :disabled="item.quantity <= 1 || updatingItems[index]"
+                            class="px-3 py-1 text-gray-500 hover:bg-gray-100 rounded-l-full transition disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <i class="fas fa-minus"></i>
                           </button>
-                          <span class="px-3">{{ item.quantity }}</span>
+                          <span class="px-3 flex items-center">
+                            <span v-if="updatingItems[index]" class="loading-spinner mr-2"></span>
+                            {{ item.quantity }}
+                          </span>
                           <button
-                            @click="increaseQuantity(index)"
-                            class="px-3 py-1 text-gray-500 hover:bg-gray-100 rounded-r-full transition"
+                            @click="increaseQuantity(item, index)"
+                            :disabled="updatingItems[index]"
+                            class="px-3 py-1 text-gray-500 hover:bg-gray-100 rounded-r-full transition disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <i class="fas fa-plus"></i>
                           </button>
                         </div>
-                        <span class="font-bold text-gray-800"
-                          >MUR {{ (item.price * item.quantity).toFixed(2) }}</span
-                        >
+                        <div class="text-right">
+                          <div class="font-bold text-gray-800">
+                            MUR {{ (item.price * item.quantity).toFixed(2) }}
+                          </div>
+                          <div class="text-xs text-gray-500">
+                            MUR {{ item.price }} each
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -212,26 +358,28 @@
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-600">Shipping</span>
-                  <span class="font-medium">Free</span>
+                  <span class="font-medium text-green-600">Free</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-600">Tax</span>
+                  <span class="text-gray-600">Tax (8%)</span>
                   <span class="font-medium">MUR {{ tax.toFixed(2) }}</span>
                 </div>
                 <div class="border-t border-gray-200 pt-3 flex justify-between">
                   <span class="font-bold text-gray-800">Total</span>
-                  <span class="font-bold text-blue-600 text-lg"
-                    >MUR {{ total.toFixed(2) }}</span
-                  >
+                  <span class="font-bold text-blue-600 text-lg">
+                    MUR {{ total.toFixed(2) }}
+                  </span>
                 </div>
               </div>
 
               <button
-                @click="checkout"
-                :disabled="cartItems.length === 0"
-                class="w-full py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition font-bold disabled:bg-gray-300 disabled:cursor-not-allowed"
+                @click="proceedToCheckout"
+                :disabled="cartItems.length === 0 || processing"
+                class="w-full py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition font-bold disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                Proceed to Checkout
+                <span v-if="processing" class="loading-spinner mr-2"></span>
+                <i v-else class="fas fa-credit-card mr-2"></i>
+                {{ processing ? 'Processing...' : 'Proceed to Checkout' }}
               </button>
 
               <div class="mt-4 text-center">
@@ -241,6 +389,57 @@
                   class="text-blue-600 hover:underline text-sm font-medium"
                   >Continue Shopping</a
                 >
+              </div>
+
+              <!-- Estimated Delivery -->
+              <div v-if="cartItems.length > 0" class="mt-6 p-4 bg-blue-50 rounded-lg">
+                <div class="flex items-center mb-2">
+                  <i class="fas fa-truck text-blue-600 mr-2"></i>
+                  <span class="text-sm font-medium text-blue-800">Free Delivery</span>
+                </div>
+                <p class="text-xs text-blue-600">
+                  Estimated delivery: {{ estimatedDelivery }}
+                </p>
+              </div>
+
+              <!-- Order Summary Details -->
+              <div v-if="cartItems.length > 0" class="mt-6 border-t pt-4">
+                <h3 class="text-sm font-medium text-gray-800 mb-3">Order Details</h3>
+                <div class="space-y-2">
+                  <div v-for="item in cartItems" :key="item.title" class="flex justify-between text-xs">
+                    <span class="text-gray-600 truncate mr-2">{{ item.title }}</span>
+                    <span class="text-gray-800 font-medium">{{ item.quantity }}x</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Suggested Products -->
+        <div v-if="isAuthenticated && cartItems.length > 0" class="mt-16">
+          <h2 class="text-2xl font-bold text-gray-800 mb-8">You might also like</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div
+              v-for="book in suggestedBooks"
+              :key="book._id"
+              class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+            >
+              <div class="h-32 bg-gradient-to-r from-blue-50 to-indigo-50 flex items-center justify-center">
+                <i class="fas fa-book text-2xl text-blue-500"></i>
+              </div>
+              <div class="p-4">
+                <h3 class="font-bold text-gray-800 text-sm mb-1 line-clamp-2">{{ book.title }}</h3>
+                <p class="text-gray-500 text-xs mb-2">{{ book.author }}</p>
+                <div class="flex justify-between items-center">
+                  <span class="text-blue-600 font-medium text-sm">MUR {{ book.price }}</span>
+                  <button
+                    @click="addSuggestedToCart(book)"
+                    class="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition"
+                  >
+                    Add
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -303,11 +502,18 @@
     </footer>
 
     <script>
-      // Vue app for cart functionality
       new Vue({
         el: "#app",
         data: {
-          cartItems: []
+          cartItems: [],
+          suggestedBooks: [],
+          loading: true,
+          isAuthenticated: false,
+          processing: false,
+          clearing: false,
+          removingItems: {},
+          updatingItems: {},
+          API_BASE_URL: 'http://localhost:3000/api'
         },
         computed: {
           subtotal() {
@@ -322,46 +528,213 @@
           total() {
             return this.subtotal + this.tax;
           },
+          estimatedDelivery() {
+            const date = new Date();
+            date.setDate(date.getDate() + 5); // 5 business days
+            return date.toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            });
+          }
         },
         mounted() {
-          this.loadCartFromStorage();
+          this.checkAuthentication();
+          this.loadCart();
+          this.loadSuggestedBooks();
+          this.updateAuthUI();
         },
         methods: {
-          loadCartFromStorage() {
-            const savedCart = localStorage.getItem('cartItems');
-            if (savedCart) {
-              this.cartItems = JSON.parse(savedCart);
+          checkAuthentication() {
+            this.isAuthenticated = authManager.isLoggedIn();
+            if (!this.isAuthenticated) {
+              this.loading = false;
             }
           },
-          saveCartToStorage() {
-            localStorage.setItem('cartItems', JSON.stringify(this.cartItems));
-          },
-          removeFromCart(index) {
-            this.cartItems.splice(index, 1);
-            this.saveCartToStorage();
-          },
-          increaseQuantity(index) {
-            this.cartItems[index].quantity++;
-            this.saveCartToStorage();
-          },
-          decreaseQuantity(index) {
-            if (this.cartItems[index].quantity > 1) {
-              this.cartItems[index].quantity--;
-              this.saveCartToStorage();
+
+          async loadCart() {
+            if (!this.isAuthenticated) return;
+            
+            try {
+              const cart = await authManager.getUserCart();
+              this.cartItems = cart || [];
+            } catch (error) {
+              console.error('Error loading cart:', error);
+              this.showNotification('Failed to load cart', 'error');
+            } finally {
+              this.loading = false;
             }
           },
-          checkout() {
+
+          async loadSuggestedBooks() {
+            try {
+              const response = await fetch(`${this.API_BASE_URL}/books?limit=4`);
+              const data = await response.json();
+              if (data.success) {
+                this.suggestedBooks = data.data.filter(book => 
+                  !this.cartItems.some(cartItem => cartItem.title === book.title)
+                ).slice(0, 4);
+              }
+            } catch (error) {
+              console.error('Error loading suggested books:', error);
+            }
+          },
+
+          async removeFromCart(item, index) {
+            this.$set(this.removingItems, index, true);
+            
+            try {
+              const result = await authManager.removeFromCart(item.title);
+              if (result !== null) {
+                // Add removal animation
+                const itemEl = document.querySelectorAll('.cart-item')[index];
+                if (itemEl) {
+                  itemEl.classList.add('removing');
+                  setTimeout(() => {
+                    this.cartItems = result;
+                    this.loadSuggestedBooks(); // Refresh suggestions
+                  }, 300);
+                } else {
+                  this.cartItems = result;
+                }
+                this.showNotification(`${item.title} removed from cart`, 'info');
+              } else {
+                this.showNotification('Failed to remove item', 'error');
+              }
+            } catch (error) {
+              console.error('Error removing item:', error);
+              this.showNotification('Error removing item', 'error');
+            } finally {
+              this.$set(this.removingItems, index, false);
+            }
+          },
+
+          async increaseQuantity(item, index) {
+            this.$set(this.updatingItems, index, true);
+            
+            try {
+              const result = await authManager.updateCartItem(item.title, item.quantity + 1);
+              if (result !== null) {
+                this.cartItems = result;
+                this.showNotification('Quantity updated', 'success');
+              } else {
+                this.showNotification('Failed to update quantity', 'error');
+              }
+            } catch (error) {
+              console.error('Error updating quantity:', error);
+              this.showNotification('Error updating quantity', 'error');
+            } finally {
+              this.$set(this.updatingItems, index, false);
+            }
+          },
+
+          async decreaseQuantity(item, index) {
+            if (item.quantity <= 1) return;
+            
+            this.$set(this.updatingItems, index, true);
+            
+            try {
+              const result = await authManager.updateCartItem(item.title, item.quantity - 1);
+              if (result !== null) {
+                this.cartItems = result;
+                this.showNotification('Quantity updated', 'success');
+              } else {
+                this.showNotification('Failed to update quantity', 'error');
+              }
+            } catch (error) {
+              console.error('Error updating quantity:', error);
+              this.showNotification('Error updating quantity', 'error');
+            } finally {
+              this.$set(this.updatingItems, index, false);
+            }
+          },
+
+          async clearCart() {
+            if (!confirm('Are you sure you want to clear your entire cart?')) return;
+            
+            this.clearing = true;
+            
+            try {
+              const result = await authManager.clearCart();
+              if (result) {
+                this.cartItems = [];
+                this.showNotification('Cart cleared successfully', 'info');
+                this.loadSuggestedBooks(); // Refresh suggestions
+              } else {
+                this.showNotification('Failed to clear cart', 'error');
+              }
+            } catch (error) {
+              console.error('Error clearing cart:', error);
+              this.showNotification('Error clearing cart', 'error');
+            } finally {
+              this.clearing = false;
+            }
+          },
+
+          async addSuggestedToCart(book) {
+            try {
+              const result = await authManager.addToCart(book);
+              if (result) {
+                this.cartItems = result;
+                this.showNotification(`${book.title} added to cart!`, 'success');
+                this.loadSuggestedBooks(); // Refresh suggestions
+              } else {
+                this.showNotification('Failed to add item to cart', 'error');
+              }
+            } catch (error) {
+              console.error('Error adding to cart:', error);
+              this.showNotification('Error adding item to cart', 'error');
+            }
+          },
+
+          async proceedToCheckout() {
             if (this.cartItems.length === 0) {
-              alert("Your cart is empty!");
+              this.showNotification('Your cart is empty', 'error');
               return;
             }
             
-            alert(`Order placed successfully! Total: MUR ${this.total.toFixed(2)}`);
-            this.cartItems = [];
-            this.saveCartToStorage();
+            // Redirect to checkout page
+            window.location.href = 'checkout.html';
           },
-        },
+
+          updateAuthUI() {
+            const userData = authManager.getUserData();
+            const authButtons = document.getElementById('auth-buttons');
+            const mobileAuthButtons = document.getElementById('mobile-auth-buttons');
+            
+            if (userData) {
+              const authContent = `
+                <div class="flex items-center space-x-4">
+                  <span class="text-gray-700">Welcome, ${userData.name}</span>
+                  <button onclick="logout()" class="px-4 py-2 text-red-600 hover:text-red-800 transition-colors">
+                    Logout
+                  </button>
+                </div>
+              `;
+              authButtons.innerHTML = authContent;
+              mobileAuthButtons.innerHTML = authContent;
+            }
+          },
+
+          showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const messageEl = document.getElementById('notification-message');
+            
+            messageEl.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+              notification.classList.remove('show');
+            }, 4000);
+          }
+        }
       });
+
+      // Global logout function
+      function logout() {
+        authManager.logout();
+      }
     </script>
   </body>
 </html>

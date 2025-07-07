@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SchoolPlus - Checkout</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <!-- Vue 2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <!-- Auth utilities -->
+    <script src="js/auth.js"></script>
+    <style>
+      .notification {
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 1000;
+        transform: translateX(100%);
+        opacity: 0;
+        transition: all 0.3s ease;
+      }
+      .notification.show {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      .notification.success {
+        background: #10b981;
+      }
+      .notification.error {
+        background: #ef4444;
+      }
+      .loading-spinner {
+        border: 2px solid #f3f4f6;
+        border-top: 2px solid #3b82f6;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      .step-indicator {
+        transition: all 0.3s ease;
+      }
+      .step-indicator.active {
+        background: #3b82f6;
+        color: white;
+      }
+      .step-indicator.completed {
+        background: #10b981;
+        color: white;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <!-- Header -->
+    <header class="fixed w-full bg-white shadow-lg z-50">
+      <nav class="container mx-auto px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div class="text-2xl font-bold text-blue-600">
+            <a href="index.html">SchoolPlus</a>
+          </div>
+          <div class="flex items-center space-x-4">
+            <a href="cart.html" class="text-gray-600 hover:text-blue-600 transition">
+              <i class="fas fa-arrow-left mr-2"></i>Back to Cart
+            </a>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Notification -->
+    <div id="notification" class="notification">
+      <span id="notification-message"></span>
+    </div>
+
+    <div id="app">
+      <main class="container mx-auto px-6 pt-28 pb-16">
+        <!-- Authentication Check -->
+        <div v-if="!isAuthenticated" class="text-center py-12">
+          <i class="fas fa-lock text-5xl text-gray-300 mb-4"></i>
+          <h3 class="text-xl font-medium text-gray-600 mb-2">
+            Please Login to Continue
+          </h3>
+          <a
+            href="login.html"
+            class="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition inline-block"
+            >Login Now</a
+          >
+        </div>
+
+        <!-- Empty Cart Check -->
+        <div v-else-if="cartItems.length === 0 && !loading" class="text-center py-12">
+          <i class="fas fa-shopping-cart text-5xl text-gray-300 mb-4"></i>
+          <h3 class="text-xl font-medium text-gray-600 mb-2">
+            Your cart is empty
+          </h3>
+          <a
+            href="courses.html"
+            class="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition inline-block"
+            >Browse Courses</a
+          >
+        </div>
+
+        <!-- Checkout Content -->
+        <div v-else-if="!loading">
+          <!-- Progress Steps -->
+          <div class="mb-8">
+            <div class="flex items-center justify-center space-x-4">
+              <div class="step-indicator completed w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium">
+                <i class="fas fa-check"></i>
+              </div>
+              <div class="h-1 w-16 bg-green-500"></div>
+              <div class="step-indicator active w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium">
+                2
+              </div>
+              <div class="h-1 w-16 bg-gray-300"></div>
+              <div class="step-indicator w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm font-medium text-gray-600">
+                3
+              </div>
+            </div>
+            <div class="flex justify-center mt-2">
+              <div class="text-center">
+                <p class="text-xs text-gray-500">Cart → <span class="text-blue-600 font-medium">Checkout</span> → Confirmation</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Checkout Form -->
+            <div class="lg:col-span-2">
+              <form @submit.prevent="placeOrder" class="space-y-6">
+                <!-- Shipping Information -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                  <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-shipping-fast mr-2 text-blue-600"></i>
+                    Shipping Information
+                  </h2>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                      <input
+                        v-model="orderData.shippingAddress.fullName"
+                        type="text"
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+                    <div class="md:col-span-2">
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                      <input
+                        v-model="orderData.shippingAddress.address"
+                        type="text"
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Street address"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">City</label>
+                      <input
+                        v-model="orderData.shippingAddress.city"
+                        type="text"
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="City"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Postal Code</label>
+                      <input
+                        v-model="orderData.shippingAddress.postalCode"
+                        type="text"
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Postal code"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Country</label>
+                      <select
+                        v-model="orderData.shippingAddress.country"
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="">Select Country</option>
+                        <option value="Mauritius">Mauritius</option>
+                        <option value="Reunion">Reunion</option>
+                        <option value="Madagascar">Madagascar</option>
+                        <option value="Seychelles">Seychelles</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                      <input
+                        v-model="orderData.shippingAddress.phone"
+                        type="tel"
+                        required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="+230 xxxx xxxx"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                  <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-credit-card mr-2 text-blue-600"></i>
+                    Payment Method
+                  </h2>
+                  <div class="space-y-3">
+                    <label class="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                      <input
+                        v-model="orderData.paymentMethod"
+                        type="radio"
+                        value="cash_on_delivery"
+                        class="mr-3"
+                      />
+                      <div class="flex items-center">
+                        <i class="fas fa-money-bill-wave text-green-600 mr-3 text-xl"></i>
+                        <div>
+                          <div class="font-medium text-gray-800">Cash on Delivery</div>
+                          <div class="text-sm text-gray-500">Pay when you receive your order</div>
+                        </div>
+                      </div>
+                    </label>
+                    
+                    <label class="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                      <input
+                        v-model="orderData.paymentMethod"
+                        type="radio"
+                        value="bank_transfer"
+                        class="mr-3"
+                      />
+                      <div class="flex items-center">
+                        <i class="fas fa-university text-blue-600 mr-3 text-xl"></i>
+                        <div>
+                          <div class="font-medium text-gray-800">Bank Transfer</div>
+                          <div class="text-sm text-gray-500">Transfer payment to our bank account</div>
+                        </div>
+                      </div>
+                    </label>
+                    
+                    <label class="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                      <input
+                        v-model="orderData.paymentMethod"
+                        type="radio"
+                        value="mobile_money"
+                        class="mr-3"
+                      />
+                      <div class="flex items-center">
+                        <i class="fas fa-mobile-alt text-purple-600 mr-3 text-xl"></i>
+                        <div>
+                          <div class="font-medium text-gray-800">Mobile Money</div>
+                          <div class="text-sm text-gray-500">Pay via My.t Money or Orange Money</div>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Order Notes -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                  <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-sticky-note mr-2 text-blue-600"></i>
+                    Order Notes (Optional)
+                  </h2>
+                  <textarea
+                    v-model="orderData.notes"
+                    rows="3"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Any special instructions for your order..."
+                  ></textarea>
+                </div>
+              </form>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="lg:col-span-1">
+              <div class="bg-white rounded-xl shadow-md p-6 sticky top-28">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Order Summary</h2>
+                
+                <!-- Cart Items -->
+                <div class="space-y-3 mb-6 max-h-64 overflow-y-auto">
+                  <div
+                    v-for="item in cartItems"
+                    :key="item.title"
+                    class="flex justify-between items-start p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div class="flex-1">
+                      <h4 class="font-medium text-sm text-gray-800 line-clamp-2">{{ item.title }}</h4>
+                      <p class="text-xs text-gray-500">{{ item.author }}</p>
+                      <p class="text-xs text-gray-600">Qty: {{ item.quantity }}</p>
+                    </div>
+                    <div class="text-sm font-medium text-gray-800 ml-2">
+                      MUR {{ (item.price * item.quantity).toFixed(2) }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Price Breakdown -->
+                <div class="space-y-3 mb-6 border-t pt-4">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Subtotal</span>
+                    <span class="font-medium">MUR {{ subtotal.toFixed(2) }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Shipping</span>
+                    <span class="font-medium text-green-600">Free</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Tax (8%)</span>
+                    <span class="font-medium">MUR {{ tax.toFixed(2) }}</span>
+                  </div>
+                  <div class="border-t border-gray-200 pt-3 flex justify-between">
+                    <span class="font-bold text-gray-800">Total</span>
+                    <span class="font-bold text-blue-600 text-lg">
+                      MUR {{ total.toFixed(2) }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Place Order Button -->
+                <button
+                  @click="placeOrder"
+                  :disabled="!isFormValid || processing"
+                  class="w-full py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition font-bold disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  <span v-if="processing" class="loading-spinner mr-2"></span>
+                  <i v-else class="fas fa-check-circle mr-2"></i>
+                  {{ processing ? 'Processing Order...' : 'Place Order' }}
+                </button>
+
+                <!-- Security Notice -->
+                <div class="mt-4 p-3 bg-green-50 rounded-lg">
+                  <div class="flex items-center text-green-800">
+                    <i class="fas fa-shield-alt mr-2"></i>
+                    <span class="text-xs">Your order is secured with SSL encryption</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div v-else class="flex justify-center items-center py-12">
+          <div class="loading-spinner w-8 h-8"></div>
+          <span class="ml-3 text-gray-600">Loading checkout...</span>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      new Vue({
+        el: "#app",
+        data: {
+          cartItems: [],
+          loading: true,
+          processing: false,
+          isAuthenticated: false,
+          orderData: {
+            shippingAddress: {
+              fullName: '',
+              address: '',
+              city: '',
+              postalCode: '',
+              country: 'Mauritius',
+              phone: ''
+            },
+            paymentMethod: 'cash_on_delivery',
+            notes: ''
+          },
+          API_BASE_URL: 'http://localhost:3000/api'
+        },
+        computed: {
+          subtotal() {
+            return this.cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+          },
+          tax() {
+            return this.subtotal * 0.08; // 8% tax
+          },
+          total() {
+            return this.subtotal + this.tax;
+          },
+          isFormValid() {
+            const addr = this.orderData.shippingAddress;
+            return addr.fullName && addr.address && addr.city && 
+                   addr.postalCode && addr.country && addr.phone && 
+                   this.orderData.paymentMethod;
+          }
+        },
+        mounted() {
+          console.log('Checkout page mounted');
+          this.checkAuthentication();
+          this.loadCart();
+          this.loadUserProfile();
+        },
+        methods: {
+          checkAuthentication() {
+            console.log('Checking authentication...');
+            this.isAuthenticated = authManager.isLoggedIn();
+            console.log('Is authenticated:', this.isAuthenticated);
+            
+            if (!this.isAuthenticated) {
+              this.loading = false;
+              this.showNotification('Please login to continue', 'error');
+              setTimeout(() => {
+                window.location.href = 'login.html';
+              }, 2000);
+            }
+          },
+
+          async loadCart() {
+            if (!this.isAuthenticated) return;
+            
+            console.log('Loading cart...');
+            try {
+              const cart = await authManager.getUserCart();
+              console.log('Cart loaded:', cart);
+              this.cartItems = cart || [];
+              
+              if (this.cartItems.length === 0) {
+                this.showNotification('Your cart is empty', 'error');
+                setTimeout(() => {
+                  window.location.href = 'cart.html';
+                }, 2000);
+              }
+            } catch (error) {
+              console.error('Error loading cart:', error);
+              this.showNotification('Failed to load cart: ' + error.message, 'error');
+            } finally {
+              this.loading = false;
+            }
+          },
+
+          async loadUserProfile() {
+            if (!this.isAuthenticated) return;
+            
+            try {
+              console.log('Loading user profile...');
+              const profile = await authManager.getUserProfile();
+              console.log('Profile loaded:', profile);
+              
+              if (profile && profile.name) {
+                this.orderData.shippingAddress.fullName = profile.name;
+              }
+            } catch (error) {
+              console.error('Error loading user profile:', error);
+            }
+          },
+
+          async placeOrder() {
+            console.log('Place order clicked');
+            console.log('Form valid:', this.isFormValid);
+            console.log('Processing:', this.processing);
+            
+            if (!this.isFormValid) {
+              this.showNotification('Please fill in all required fields', 'error');
+              return;
+            }
+            
+            if (this.processing) return;
+            
+            this.processing = true;
+            console.log('Processing order...');
+            
+            try {
+              // Log the order data being sent
+              console.log('Order data:', this.orderData);
+              console.log('Cart items:', this.cartItems);
+              
+              // Prepare order data for the /api/orders endpoint
+              const orderPayload = {
+                items: this.cartItems.map(item => ({
+                  bookId: item.bookId || item._id, // Handle different cart formats
+                  quantity: item.quantity
+                })),
+                shippingAddress: {
+                  fullName: this.orderData.shippingAddress.fullName,
+                  address: this.orderData.shippingAddress.address,
+                  city: this.orderData.shippingAddress.city,
+                  postalCode: this.orderData.shippingAddress.postalCode,
+                  country: this.orderData.shippingAddress.country,
+                  phone: this.orderData.shippingAddress.phone
+                },
+                paymentMethod: this.orderData.paymentMethod,
+                notes: this.orderData.notes || ''
+              };
+              
+              console.log('Sending order payload:', orderPayload);
+              
+              // Check if authManager exists
+              if (!window.authManager) {
+                throw new Error('AuthManager not loaded. Please refresh the page.');
+              }
+              
+              // Make direct API call to /api/orders instead of from-cart
+              const response = await authManager.makeAuthenticatedRequest('/orders', {
+                method: 'POST',
+                body: JSON.stringify(orderPayload)
+              });
+              
+              if (!response) {
+                throw new Error('Failed to get response from server');
+              }
+              
+              const data = await response.json();
+              console.log('Order response:', data);
+              
+              if (response.ok && data.success) {
+                const order = data.data;
+                this.showNotification(`Order placed successfully! Order #${order.orderNumber}`, 'success');
+                
+                // Redirect to order confirmation page
+                setTimeout(() => {
+                  window.location.href = `order-confirmation.html?orderId=${order._id}`;
+                }, 2000);
+              } else {
+                throw new Error(data.error || 'Failed to place order');
+              }
+            } catch (error) {
+              console.error('Error placing order:', error);
+              
+              // Provide more specific error messages
+              let errorMessage = 'Error placing order. ';
+              if (error.message) {
+                errorMessage += error.message;
+              } else if (error.toString().includes('Failed to fetch')) {
+                errorMessage += 'Please check your internet connection and ensure the server is running.';
+              } else {
+                errorMessage += 'Please try again.';
+              }
+              
+              this.showNotification(errorMessage, 'error');
+            } finally {
+              this.processing = false;
+            }
+          },
+
+          showNotification(message, type = 'success') {
+            console.log('Notification:', message, type);
+            const notification = document.getElementById('notification');
+            const messageEl = document.getElementById('notification-message');
+            
+            if (notification && messageEl) {
+              messageEl.textContent = message;
+              notification.className = `notification ${type} show`;
+              
+              setTimeout(() => {
+                notification.classList.remove('show');
+              }, 4000);
+            } else {
+              // Fallback to alert if notification elements not found
+              alert(message);
+            }
+          }
+        }
+      });
+
+      // Global error handling
+      window.addEventListener('error', function(event) {
+        console.error('Global error:', event.error);
+      });
+
+      // Check if auth.js is loaded
+      window.addEventListener('load', function() {
+        if (!window.authManager) {
+          console.error('AuthManager not found! Make sure js/auth.js is loaded correctly.');
+          alert('Authentication system not loaded. Please refresh the page.');
+        } else {
+          console.log('AuthManager loaded successfully');
+        }
+      });
+    </script>
+  </body>
+</html>

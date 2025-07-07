@@ -3,7 +3,7 @@ const { MongoClient, ObjectId } = require('mongodb');
 const bcrypt = require('bcryptjs');
 
 const uri = process.env.MONGO_URI || 'mongodb://localhost:27017';
-const dbName = process.env.DB_NAME || 'schoolplus_db';
+const dbName = process.env.DB_NAME || 'DB_NAME';
 
 async function seedDatabase() {
     const client = new MongoClient(uri);
