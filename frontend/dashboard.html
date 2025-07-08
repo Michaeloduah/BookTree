@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SchoolPlus - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <!-- Vue 2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <!-- Auth utilities -->
+    <script src="js/auth.js"></script>
+    <style>
+      @keyframes float {
+        0% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+        100% {
+          transform: translateY(0px);
+        }
+      }
+      .float-animation {
+        animation: float 3s ease-in-out infinite;
+      }
+      .notification {
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 1000;
+        transform: translateX(100%);
+        opacity: 0;
+        transition: all 0.3s ease;
+      }
+      .notification.show {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      .notification.success {
+        background: #10b981;
+      }
+      .notification.error {
+        background: #ef4444;
+      }
+      .notification.info {
+        background: #3b82f6;
+      }
+      .loading-spinner {
+        border: 2px solid #f3f4f6;
+        border-top: 2px solid #3b82f6;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      .skeleton {
+        animation: pulse 1.5s ease-in-out infinite;
+        background: linear-gradient(
+          90deg,
+          #f0f0f0 25%,
+          #e0e0e0 50%,
+          #f0f0f0 75%
+        );
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+      }
+      @keyframes loading {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+      .status-badge {
+        padding: 4px 12px;
+        border-radius: 9999px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .status-confirmed {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+      .status-processing {
+        background: #e0e7ff;
+        color: #5b21b6;
+      }
+      .status-shipped {
+        background: #dcfce7;
+        color: #166534;
+      }
+      .status-delivered {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      .status-cancelled {
+        background: #fee2e2;
+        color: #dc2626;
+      }
+      .card-hover {
+        transition: all 0.3s ease;
+      }
+      .card-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+          0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <!-- Header -->
+    <header class="fixed w-full bg-white shadow-lg z-50">
+      <nav class="container mx-auto px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div class="text-2xl font-bold text-blue-600 float-animation">
+            <a href="index.html">SchoolPlus</a>
+          </div>
+          <!-- Desktop Menu -->
+          <ul class="hidden md:flex space-x-8">
+            <li>
+              <a
+                href="courses.html"
+                class="text-gray-700 hover:text-blue-600 transition-colors duration-300"
+                >Courses</a
+              >
+            </li>
+            <li>
+              <a
+                href="cart.html"
+                class="text-gray-700 hover:text-blue-600 transition-colors duration-300"
+                >Cart</a
+              >
+            </li>
+            <li>
+              <a href="dashboard.html" class="text-blue-600 font-medium"
+                >Dashboard</a
+              >
+            </li>
+          </ul>
+          <div id="auth-buttons" class="space-x-4 hidden md:block">
+            <div class="flex items-center space-x-4">
+              <button
+                onclick="logout()"
+                class="px-4 py-2 text-red-600 hover:text-red-800 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Notification -->
+    <div id="notification" class="notification">
+      <span id="notification-message"></span>
+    </div>
+
+    <div id="app">
+      <main class="container mx-auto px-6 pt-28 pb-16">
+        <!-- Authentication Check -->
+        <div v-if="!isAuthenticated" class="text-center py-12">
+          <i class="fas fa-lock text-5xl text-gray-300 mb-4"></i>
+          <h3 class="text-xl font-medium text-gray-600 mb-2">
+            Please Login to Access Dashboard
+          </h3>
+          <p class="text-gray-500 mb-4">
+            You need to be logged in to view your dashboard
+          </p>
+          <a
+            href="login.html"
+            class="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition inline-block"
+            >Login Now</a
+          >
+        </div>
+
+        <!-- Dashboard Content -->
+        <div v-else>
+          <!-- Welcome Section -->
+          <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+              Welcome back, {{ userData ? userData.name : 'User' }}!
+            </h1>
+            <p class="text-gray-600">
+              Here's an overview of your account and recent activity
+            </p>
+          </div>
+
+          <!-- Quick Stats -->
+          <div
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+          >
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+              <div class="flex items-center">
+                <div class="p-3 bg-blue-100 rounded-full">
+                  <i class="fas fa-shopping-bag text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                  <p class="text-2xl font-bold text-gray-800">
+                    {{ orderStats.totalOrders || 0 }}
+                  </p>
+                  <p class="text-gray-600 text-sm">Total Orders</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+              <div class="flex items-center">
+                <div class="p-3 bg-green-100 rounded-full">
+                  <i class="fas fa-dollar-sign text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                  <p class="text-2xl font-bold text-gray-800">
+                    MUR {{ orderStats.totalRevenue ?
+                    orderStats.totalRevenue.toFixed(2) : '0.00' }}
+                  </p>
+                  <p class="text-gray-600 text-sm">Total Spent</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+              <div class="flex items-center">
+                <div class="p-3 bg-yellow-100 rounded-full">
+                  <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                  <p class="text-2xl font-bold text-gray-800">
+                    {{ orderStats.pendingOrders || 0 }}
+                  </p>
+                  <p class="text-gray-600 text-sm">Pending Orders</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+              <div class="flex items-center">
+                <div class="p-3 bg-purple-100 rounded-full">
+                  <i class="fas fa-shopping-cart text-purple-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                  <p class="text-2xl font-bold text-gray-800">
+                    {{ cartCount || 0 }}
+                  </p>
+                  <p class="text-gray-600 text-sm">Items in Cart</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Content Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Recent Orders -->
+            <div class="lg:col-span-2">
+              <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between mb-6">
+                  <h2 class="text-xl font-bold text-gray-800">Recent Orders</h2>
+                  <button
+                    @click="loadOrders"
+                    class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  >
+                    <i class="fas fa-refresh mr-1"></i>Refresh
+                  </button>
+                </div>
+
+                <!-- Loading State -->
+                <div v-if="ordersLoading" class="space-y-4">
+                  <div
+                    v-for="n in 3"
+                    :key="n"
+                    class="border border-gray-200 rounded-lg p-4"
+                  >
+                    <div class="flex justify-between items-start mb-2">
+                      <div class="skeleton h-6 w-32"></div>
+                      <div class="skeleton h-5 w-20"></div>
+                    </div>
+                    <div class="skeleton h-4 w-full mb-2"></div>
+                    <div class="skeleton h-4 w-3/4"></div>
+                  </div>
+                </div>
+
+                <!-- No Orders -->
+                <div v-else-if="orders.length === 0" class="text-center py-8">
+                  <i
+                    class="fas fa-shopping-bag text-4xl text-gray-300 mb-4"
+                  ></i>
+                  <h3 class="text-lg font-medium text-gray-600 mb-2">
+                    No orders yet
+                  </h3>
+                  <p class="text-gray-500 mb-4">
+                    Start shopping to see your orders here
+                  </p>
+                  <a
+                    href="courses.html"
+                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-block"
+                  >
+                    Browse Books
+                  </a>
+                </div>
+
+                <!-- Orders List -->
+                <div v-else class="space-y-4">
+                  <div
+                    v-for="order in orders"
+                    :key="order._id"
+                    class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors cursor-pointer"
+                    @click="viewOrderDetails(order)"
+                  >
+                    <div class="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 class="font-semibold text-gray-800">
+                          Order #{{ order.orderNumber }}
+                        </h3>
+                        <p class="text-sm text-gray-600">
+                          {{ formatDate(order.createdAt) }}
+                        </p>
+                      </div>
+                      <span
+                        class="status-badge"
+                        :class="getStatusClass(order.status)"
+                      >
+                        {{ order.status.charAt(0).toUpperCase() +
+                        order.status.slice(1) }}
+                      </span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <div>
+                        <p class="text-sm text-gray-600">
+                          {{ order.items.length }} {{ order.items.length === 1 ?
+                          'item' : 'items' }}
+                        </p>
+                        <p class="text-sm text-gray-500">
+                          Payment: {{ formatPaymentMethod(order.paymentMethod)
+                          }}
+                        </p>
+                      </div>
+                      <div class="text-right">
+                        <p class="font-bold text-gray-800">
+                          MUR {{ order.totalAmount.toFixed(2) }}
+                        </p>
+                        <button
+                          @click.stop="cancelOrder(order)"
+                          v-if="order.status === 'pending'"
+                          class="text-xs text-red-600 hover:text-red-800 mt-1"
+                        >
+                          Cancel Order
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Load More Button -->
+                  <div v-if="hasMoreOrders" class="text-center pt-4">
+                    <button
+                      @click="loadMoreOrders"
+                      :disabled="loadingMore"
+                      class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-center mx-auto"
+                    >
+                      <span
+                        v-if="loadingMore"
+                        class="loading-spinner mr-2"
+                      ></span>
+                      {{ loadingMore ? 'Loading...' : 'Load More Orders' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="lg:col-span-1 space-y-6">
+              <!-- Profile Card -->
+              <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">
+                  Profile Information
+                </h3>
+                <div class="space-y-3">
+                  <div>
+                    <label class="text-sm font-medium text-gray-600"
+                      >Name</label
+                    >
+                    <input
+                      v-model="profileForm.name"
+                      type="text"
+                      class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label class="text-sm font-medium text-gray-600"
+                      >Email</label
+                    >
+                    <input
+                      v-model="profileForm.email"
+                      type="email"
+                      disabled
+                      class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
+                    />
+                  </div>
+                  <button
+                    @click="updateProfile"
+                    :disabled="updatingProfile"
+                    class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center"
+                  >
+                    <span
+                      v-if="updatingProfile"
+                      class="loading-spinner mr-2"
+                    ></span>
+                    {{ updatingProfile ? 'Updating...' : 'Update Profile' }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick Actions -->
+              <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">
+                  Quick Actions
+                </h3>
+                <div class="space-y-3">
+                  <a
+                    href="courses.html"
+                    class="flex items-center p-3 rounded-lg hover:bg-blue-50 transition"
+                  >
+                    <div class="p-2 bg-blue-100 rounded-lg mr-3">
+                      <i class="fas fa-book text-blue-600"></i>
+                    </div>
+                    <span class="font-medium text-gray-700">Browse Books</span>
+                  </a>
+                  <a
+                    href="cart.html"
+                    class="flex items-center p-3 rounded-lg hover:bg-green-50 transition"
+                  >
+                    <div class="p-2 bg-green-100 rounded-lg mr-3">
+                      <i class="fas fa-shopping-cart text-green-600"></i>
+                    </div>
+                    <span class="font-medium text-gray-700">View Cart</span>
+                  </a>
+                  <button
+                    @click="downloadOrderHistory"
+                    class="flex items-center p-3 rounded-lg hover:bg-purple-50 transition w-full text-left"
+                  >
+                    <div class="p-2 bg-purple-100 rounded-lg mr-3">
+                      <i class="fas fa-download text-purple-600"></i>
+                    </div>
+                    <span class="font-medium text-gray-700"
+                      >Download Order History</span
+                    >
+                  </button>
+                </div>
+              </div>
+
+              <!-- Account Summary -->
+              <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">
+                  Account Summary
+                </h3>
+                <div class="space-y-3">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Member since</span>
+                    <span class="font-medium"
+                      >{{ formatDate(userData?.createdAt) }}</span
+                    >
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Total orders</span>
+                    <span class="font-medium"
+                      >{{ orderStats.totalOrders || 0 }}</span
+                    >
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Completed orders</span>
+                    <span class="font-medium text-green-600"
+                      >{{ orderStats.completedOrders || 0 }}</span
+                    >
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Account status</span>
+                    <span class="font-medium text-green-600">Active</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      new Vue({
+        el: "#app",
+        data: {
+          isAuthenticated: false,
+          userData: null,
+          orders: [],
+          orderStats: {},
+          cartCount: 0,
+          ordersLoading: true,
+          loadingMore: false,
+          hasMoreOrders: false,
+          currentPage: 1,
+          selectedOrder: null,
+          updatingProfile: false,
+          profileForm: {
+            name: "",
+            email: "",
+          },
+          API_BASE_URL: "http://localhost:3000/api",
+        },
+        mounted() {
+          this.checkAuthentication();
+          if (this.isAuthenticated) {
+            this.loadDashboardData();
+          }
+        },
+        methods: {
+          checkAuthentication() {
+            this.isAuthenticated = authManager.isLoggedIn();
+            this.userData = authManager.getUserData();
+
+            if (!this.isAuthenticated) {
+              setTimeout(() => {
+                window.location.href = "login.html";
+              }, 3000);
+            } else {
+              this.profileForm.name = this.userData.name || "";
+              this.profileForm.email = this.userData.email || "";
+            }
+          },
+
+          async loadDashboardData() {
+            await Promise.all([
+              this.loadOrders(),
+              this.loadOrderStats(),
+              this.loadCartCount(),
+            ]);
+          },
+
+          async loadOrders(page = 1) {
+            this.ordersLoading = page === 1;
+            this.loadingMore = page > 1;
+
+            try {
+              const response = await authManager.makeAuthenticatedRequest(
+                `/orders?page=${page}&limit=5`
+              );
+              if (response && response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                  if (page === 1) {
+                    this.orders = data.data;
+                  } else {
+                    this.orders = [...this.orders, ...data.data];
+                  }
+                  this.currentPage = page;
+                  this.hasMoreOrders =
+                    data.pagination.page < data.pagination.pages;
+                }
+              }
+            } catch (error) {
+              console.error("Error loading orders:", error);
+              this.showNotification("Failed to load orders", "error");
+            } finally {
+              this.ordersLoading = false;
+              this.loadingMore = false;
+            }
+          },
+
+          async loadOrderStats() {
+            try {
+              const response = await authManager.makeAuthenticatedRequest(
+                "/orders/stats"
+              );
+              if (response && response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                  this.orderStats = data.data;
+                }
+              }
+            } catch (error) {
+              console.error("Error loading order stats:", error);
+            }
+          },
+
+          async loadCartCount() {
+            try {
+              const cart = await authManager.getUserCart();
+              this.cartCount = cart.reduce(
+                (total, item) => total + item.quantity,
+                0
+              );
+            } catch (error) {
+              console.error("Error loading cart count:", error);
+            }
+          },
+
+          loadMoreOrders() {
+            this.loadOrders(this.currentPage + 1);
+          },
+
+          viewOrderDetails(order) {
+            this.selectedOrder = order;
+          },
+
+          async cancelOrder(order) {
+            if (
+              !confirm(
+                `Are you sure you want to cancel order #${order.orderNumber}?`
+              )
+            ) {
+              return;
+            }
+
+            try {
+              const response = await authManager.makeAuthenticatedRequest(
+                `/orders/${order._id}/status`,
+                {
+                  method: "PUT",
+                  body: JSON.stringify({
+                    status: "cancelled",
+                    notes: "Cancelled by customer",
+                  }),
+                }
+              );
+
+              if (response && response.ok) {
+                this.showNotification("Order cancelled successfully", "info");
+                await this.loadOrders();
+                await this.loadOrderStats();
+              } else {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Failed to cancel order");
+              }
+            } catch (error) {
+              console.error("Error cancelling order:", error);
+              this.showNotification(
+                error.message || "Failed to cancel order",
+                "error"
+              );
+            }
+          },
+
+          async updateProfile() {
+            if (!this.profileForm.name.trim()) {
+              this.showNotification("Name is required", "error");
+              return;
+            }
+
+            this.updatingProfile = true;
+
+            try {
+              const response = await authManager.makeAuthenticatedRequest(
+                "/users/profile",
+                {
+                  method: "PUT",
+                  body: JSON.stringify({
+                    name: this.profileForm.name.trim(),
+                  }),
+                }
+              );
+
+              if (response && response.ok) {
+                const data = await response.json();
+
+                // Update stored user data
+                const updatedUser = {
+                  ...this.userData,
+                  name: this.profileForm.name.trim(),
+                };
+                authManager.storeUserData(
+                  updatedUser,
+                  authManager.getToken(),
+                  !!localStorage.getItem("userToken")
+                );
+                this.userData = updatedUser;
+
+                this.showNotification(
+                  "Profile updated successfully",
+                  "success"
+                );
+              } else {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Failed to update profile");
+              }
+            } catch (error) {
+              console.error("Error updating profile:", error);
+              this.showNotification(
+                error.message || "Failed to update profile",
+                "error"
+              );
+            } finally {
+              this.updatingProfile = false;
+            }
+          },
+
+          downloadOrderHistory() {
+            if (this.orders.length === 0) {
+              this.showNotification("No orders to download", "info");
+              return;
+            }
+
+            // Create CSV content
+            const csvContent = [
+              [
+                "Order Number",
+                "Date",
+                "Status",
+                "Items",
+                "Total Amount",
+                "Payment Method",
+              ].join(","),
+              ...this.orders.map((order) =>
+                [
+                  order.orderNumber,
+                  this.formatDate(order.createdAt),
+                  order.status,
+                  order.items.length,
+                  `MUR ${order.totalAmount.toFixed(2)}`,
+                  this.formatPaymentMethod(order.paymentMethod),
+                ].join(",")
+              ),
+            ].join("\n");
+
+            // Create and download file
+            const blob = new Blob([csvContent], { type: "text/csv" });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `order-history-${
+              new Date().toISOString().split("T")[0]
+            }.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            this.showNotification("Order history downloaded", "success");
+          },
+
+          formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            });
+          },
+
+          formatPaymentMethod(method) {
+            const methods = {
+              cash_on_delivery: "Cash on Delivery",
+              credit_card: "Credit Card",
+              bank_transfer: "Bank Transfer",
+              mobile_payment: "Mobile Payment",
+            };
+            return methods[method] || method;
+          },
+
+          getStatusClass(status) {
+            return `status-${status}`;
+          },
+
+          showNotification(message, type = "success") {
+            const notification = document.getElementById("notification");
+            const messageEl = document.getElementById("notification-message");
+
+            messageEl.textContent = message;
+            notification.className = `notification ${type} show`;
+
+            setTimeout(() => {
+              notification.classList.remove("show");
+            }, 4000);
+          },
+        },
+      });
+
+      // Global logout function
+      function logout() {
+        authManager.logout();
+      }
+    </script>
+  </body>
+</html>
