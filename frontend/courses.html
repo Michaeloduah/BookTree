@@ -205,16 +205,6 @@
           </div>
           <div class="flex gap-4 items-center">
             <select
-              v-model="selectedCategory"
-              @change="filterByCategory"
-              class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">All Categories</option>
-              <option v-for="category in categories" :key="category._id" :value="category._id">
-                {{ category.name }}
-              </option>
-            </select>
-            <select
               v-model="sortBy"
               @change="sortBooks"
               class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
