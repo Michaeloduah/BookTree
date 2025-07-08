@@ -373,13 +373,13 @@
               </div>
 
               <button
-                @click="proceedToCheckout"
+                @click="confirmOrder"
                 :disabled="cartItems.length === 0 || processing"
                 class="w-full py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition font-bold disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 <span v-if="processing" class="loading-spinner mr-2"></span>
-                <i v-else class="fas fa-credit-card mr-2"></i>
-                {{ processing ? 'Processing...' : 'Proceed to Checkout' }}
+                <i v-else class="fas fa-check-circle mr-2"></i>
+                {{ processing ? 'Processing Order...' : 'Confirm Order' }}
               </button>
 
               <div class="mt-4 text-center">
@@ -688,14 +688,108 @@
             }
           },
 
-          async proceedToCheckout() {
-            if (this.cartItems.length === 0) {
-              this.showNotification('Your cart is empty', 'error');
-              return;
-            }
+          async confirmOrder() {
+            if (this.cartItems.length === 0) return;
             
-            // Redirect to checkout page
-            window.location.href = 'checkout.html';
+            this.processing = true;
+            
+            try {
+              // Debug: Log cart items to see their structure
+              console.log('Cart items:', this.cartItems);
+              
+              // Prepare order data for direct API call
+              const orderItems = [];
+              
+              for (const item of this.cartItems) {
+                let bookId = item.bookId || item._id || item.id;
+                const quantity = parseInt(item.quantity) || 1;
+                
+                // If no bookId, try to find the book by title and author
+                if (!bookId) {
+                  try {
+                    const response = await fetch(`${this.API_BASE_URL}/books?search=${encodeURIComponent(item.title)}&limit=1`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.data.length > 0) {
+                      const foundBook = data.data.find(book => 
+                        book.title === item.title && book.author === item.author
+                      );
+                      if (foundBook) {
+                        bookId = foundBook._id;
+                      }
+                    }
+                  } catch (error) {
+                    console.error('Error finding book:', error);
+                  }
+                }
+                
+                if (!bookId) {
+                  throw new Error(`Could not find bookId for item: ${item.title} by ${item.author}`);
+                }
+                
+                if (!quantity || quantity <= 0) {
+                  throw new Error(`Invalid quantity for item: ${item.title}`);
+                }
+                
+                orderItems.push({
+                  bookId: bookId,
+                  quantity: quantity
+                });
+              }
+              
+              console.log('Processed order items:', orderItems);
+              
+              const orderData = {
+                items: orderItems,
+                shippingAddress: {
+                  name: "Customer", // You can make this dynamic later with user profile
+                  address: "123 Main Street",
+                  city: "Beau Bassin-Rose Hill",
+                  postalCode: "71504",
+                  country: "Mauritius",
+                  phone: "+230 123 4567", // Default phone
+                  email: authManager.getUserData()?.email || "customer@example.com"
+                },
+                paymentMethod: "cash_on_delivery", // Default payment method
+                notes: `Order placed on ${new Date().toLocaleDateString()}`
+              };
+              
+              console.log('Order data being sent:', orderData);
+              
+              // Call the direct orders API endpoint
+              const response = await authManager.makeAuthenticatedRequest('/orders', {
+                method: 'POST',
+                body: JSON.stringify(orderData)
+              });
+              
+              if (response && response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                  // Order created successfully
+                  const order = result.data;
+                  this.showNotification(`Order placed successfully! Order #${order.orderNumber}`, 'success');
+                  
+                  // Clear the cart after successful order
+                  this.cartItems = [];
+                  
+                  // Show order details
+                  setTimeout(() => {
+                    alert(`Order Confirmation:\nOrder Number: ${order.orderNumber}\nTotal: MUR ${order.totalAmount.toFixed(2)}\nStatus: ${order.status}\n\nThank you for your order!`);
+                  }, 1000);
+                  
+                } else {
+                  throw new Error(result.error || 'Failed to create order');
+                }
+              } else {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to create order');
+              }
+            } catch (error) {
+              console.error('Error creating order:', error);
+              this.showNotification(error.message || 'Failed to place order. Please try again.', 'error');
+            } finally {
+              this.processing = false;
+            }
           },
 
           updateAuthUI() {

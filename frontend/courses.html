@@ -116,6 +116,9 @@
                 href="cart.html"
                 class="text-gray-700 hover:text-blue-600 transition-colors duration-300 relative"
                 >Cart
+                <span v-if="cartCount > 0" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {{ cartCount }}
+                </span>
               </a>
             </li>
           </ul>
@@ -526,7 +529,16 @@
               this.$set(this.addingToCart, book._id, true);
               
               try {
-                const result = await authManager.addToCart(book);
+                // Prepare book data with proper bookId
+                const bookData = {
+                  title: book.title,
+                  author: book.author,
+                  description: book.description,
+                  price: book.price,
+                  bookId: book._id // Ensure bookId is included
+                };
+                
+                const result = await authManager.addToCart(bookData);
                 if (result) {
                   this.showNotification(`${book.title} added to cart!`);
                   this.updateCartCount();
